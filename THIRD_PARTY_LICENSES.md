@@ -20,6 +20,8 @@
 - React Router (MIT)
 - Zustand (MIT)
 - Dexie (Apache-2.0)
+- Capacitor core, CLI, Android platform and plugins — app, haptics, network,
+  preferences, share, splash-screen, status-bar, assets (MIT)
 - Vite, @vitejs/plugin-react, TypeScript (MIT / Apache-2.0)
 
 ## Runtime dependencies (server)
@@ -28,10 +30,16 @@
 - httpx (BSD-3-Clause)
 - Pydantic, pydantic-settings (MIT)
 - redis-py (MIT)
+- asyncpg (Apache-2.0)
+- python-multipart (Apache-2.0)
+
+## Tooling
+- tsx (MIT) — runs the evaluation and verse-check scripts.
 
 ## Services
 - **Gloo AI Studio** — Completions V2 (guarded). Used for discernment,
   truth selection, composition and weekly insight when credentials are set.
 - **YouVersion Platform** — Bible passages, verse search, verse of the day.
+- **OpenAI** — Whisper speech-to-text and text-to-speech, when a key is set.
 
 Run `npm ls` (in `app/`) and `pip freeze` (in `server/`) for exact versions.

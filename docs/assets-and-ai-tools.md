@@ -1,6 +1,7 @@
 # AI tools and assets used
 
 Per the hackathon rules, every AI tool and paid asset is listed with its source.
+Paths are relative to the repository root.
 
 ## Scripture
 - Verse text: **YouVersion Platform API** (live) / **Berean Standard Bible**,
@@ -15,11 +16,23 @@ Per the hackathon rules, every AI tool and paid asset is listed with its source.
   When no Gloo credentials are configured, an on-device/deterministic fallback
   is used so the app still runs.
 
+## Speech
+- **OpenAI Whisper** (`whisper-1`) transcribes recorded audio server-side
+  (`POST /api/transcribe`). **OpenAI text-to-speech** (`gpt-4o-mini-tts`,
+  voice `sage` by default) produces the read-aloud audio (`POST /api/speak`).
+  No browser speech-recognition or speech-synthesis API is used. Without
+  `OPENAI_API_KEY` voice reports "off" and the app falls back to typing.
+
 ## Artwork (design kit)
 - Vector battle scene (orb, guardian, The Ember with the lie scroll, hills of
   fire, cross of light) — original SVGs from the UNSEEN design kit.
   The guardian's face stays hidden in light; tempters are symbolic; the cross
   appears only as light. No face of God the Father or Jesus is ever depicted.
+- Character poses (guardian, person, tempter), the strike impact burst and the
+  scroll prop references: the takes each pose was chosen from and the chosen
+  finals are kept in `svg_images_dataset/`; its README
+  maps each final to the id used in `app/public/art/`. Record the tool used for
+  any generated take here.
 - Pre-rendered battle clips (approach/taunt/strike/flee/climax/peace) are
   OPTIONAL. When absent or slow, the app falls back to the vector scene, so the
   demo never depends on video. Any clips added must be listed here with the
@@ -28,7 +41,9 @@ Per the hackathon rules, every AI tool and paid asset is listed with its source.
 ## Fonts
 - Alegreya, Alegreya Sans — SIL Open Font License 1.1.
 
-## Demo data
-- `app/src/dev/seed.ts` generates ~8 weeks of synthetic battles. All demo rows
-  are labelled "Demo data" on every screen that shows them. No real person's
-  data is used.
+## Seed data
+- `database/seeds/seed.py` loads reference data derived from the product's own
+  Truth Index plus a synthetic, content-free development dataset (anonymous
+  installs flagged `synthetic`, prayer links, AI-call metadata).
+  `database/seeds/seed_user.py` gives an account an eight-week synthetic
+  history. No real person's data is used; the seeds never touch real devices.

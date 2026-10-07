@@ -1,6 +1,6 @@
 """Shared helpers for the migration runner and the seed.
 
-Reads DATABASE_URL from the environment first, then from ``unseen/.env`` (the
+Reads DATABASE_URL from the environment first, then from the repository-root ``.env`` (the
 same file the API reads through pydantic-settings). Kept dependency-free so the
 scripts run with the server venv python and nothing else.
 """
@@ -11,8 +11,8 @@ import sys
 from pathlib import Path
 
 DATABASE_DIR = Path(__file__).resolve().parent
-UNSEEN_DIR = DATABASE_DIR.parent
-SERVER_DIR = UNSEEN_DIR / "server"
+REPO_DIR = DATABASE_DIR.parent
+SERVER_DIR = REPO_DIR / "server"
 
 
 def read_dotenv(path: Path) -> dict[str, str]:
@@ -35,9 +35,9 @@ def read_dotenv(path: Path) -> dict[str, str]:
 
 
 def database_url() -> str:
-    url = os.environ.get("DATABASE_URL") or read_dotenv(UNSEEN_DIR / ".env").get("DATABASE_URL")
+    url = os.environ.get("DATABASE_URL") or read_dotenv(REPO_DIR / ".env").get("DATABASE_URL")
     if not url:
-        sys.exit("DATABASE_URL is not set (export it or add it to unseen/.env)")
+        sys.exit("DATABASE_URL is not set (export it or add it to the repository-root .env)")
     return url
 
 

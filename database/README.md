@@ -2,11 +2,12 @@
 
 ## What PostgreSQL holds
 
-UNSEEN is **account-less**: identity is the random install UUID the phone
-generates. Since 2026-10-08 the database is the durable copy of each install's
-own records — what the app shows in Stones, Schemes, Watch, Armory and Allies —
-so a reinstall or a second device can pull it back (`GET/POST/DELETE /api/me`,
-`database/migrations/0002_user_data.sql`). The phone keeps its AES-GCM sealed
+A phone identifies itself by a random install UUID it generates; since
+2026-10-08 the records belong to an **account** (`users` + `sessions`,
+`migrations/0003_users.sql`) and the database is the durable copy of each
+account's own records — what the app shows in Stones, Schemes, Watch, Armory
+and Allies — so a reinstall or a second device can pull it back
+(`GET/POST/DELETE /api/me`, `migrations/0002_user_data.sql`). The phone keeps its AES-GCM sealed
 copy as the fast path and pushes every write through an outbox. What a person
 actually *said* (the transcript) never leaves the phone; Scripture **text** is
 never stored anywhere (references only — the app fetches and byte-verifies it
@@ -45,7 +46,7 @@ The remaining tables are the small set of server-side state that predates this:
 | `ai_interactions` | Metadata-only audit of AI calls: endpoint, model (`gloo-…` or `fallback-classifier`), prompt version, latency, struggle/safety labels, confidence, intensity, chosen verse ids. **No text columns.** |
 | `schema_migrations` | Applied migration versions + checksums (managed by `migrate.py`). |
 
-Deliberately **absent**: `users`, `sessions`, passwords, e-mail, raw transcripts,
+Deliberately **absent**: plain-text passwords, e-mail addresses, raw transcripts,
 Scripture text. Rate-limit counters stay in **Redis** (cache).
 
 ### Relationships
@@ -75,7 +76,7 @@ installs 1 ─── * prayer_requests        installs 1 ─── * ai_interact
 ## Create → migrate → seed → run
 
 ```bash
-cd unseen
+# From the repository root.
 # 1. A database. Either a local Docker container…
 docker run -d --name unseen-postgres -e POSTGRES_USER=unseen -e POSTGRES_PASSWORD=unseen \
   -e POSTGRES_DB=unseen -p 5433:5432 postgres:16

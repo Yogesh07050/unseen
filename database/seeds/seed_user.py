@@ -2,13 +2,13 @@
 """Fill a real install with a believable eight-week history, so Stones, Schemes,
 Watch, Armory and Allies show a lived-in account from the first open.
 
-    cd unseen && server/.venv/bin/python database/seeds/seed_user.py --username yogesh --name Yogesh
-    cd unseen && server/.venv/bin/python database/seeds/seed_user.py --all-recent --name Yogesh          # anonymous installs
-    cd unseen && server/.venv/bin/python database/seeds/seed_user.py --install <uuid> --name Yogesh --replace
+    server/.venv/bin/python database/seeds/seed_user.py --username yogesh --name Yogesh
+    server/.venv/bin/python database/seeds/seed_user.py --all-recent --name Yogesh          # anonymous installs
+    server/.venv/bin/python database/seeds/seed_user.py --install <uuid> --name Yogesh --replace
 
 With --username the history belongs to that ACCOUNT (users table, 0003): the
 user is created if missing (password from --password or SEED_USER_PASSWORD in
-the environment / unseen/.env), the history is written once under the account,
+the environment / the repository-root .env), the history is written once under the account,
 earlier anonymous copies on the targeted installs are removed, and those
 installs are linked to the account. Signing in as that user on any phone then
 pulls this one history. Without --username the rows stay anonymous, keyed by
@@ -46,7 +46,7 @@ from pathlib import Path
 import asyncpg
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from _env import SERVER_DIR, UNSEEN_DIR, add_server_to_path, database_url, masked, read_dotenv  # noqa: E402
+from _env import REPO_DIR, SERVER_DIR, add_server_to_path, database_url, masked, read_dotenv  # noqa: E402
 
 add_server_to_path()
 from app.services import auth as auths  # noqa: E402
@@ -255,7 +255,7 @@ async def seed_account(args: argparse.Namespace) -> int:
     try:
         user = await conn.fetchrow("SELECT id, username FROM users WHERE username = $1", username)
         if user is None:
-            password = args.password or os.environ.get("SEED_USER_PASSWORD") or read_dotenv(UNSEEN_DIR / ".env").get("SEED_USER_PASSWORD")
+            password = args.password or os.environ.get("SEED_USER_PASSWORD") or read_dotenv(REPO_DIR / ".env").get("SEED_USER_PASSWORD")
             if not password:
                 print("  the account does not exist yet: pass --password or set SEED_USER_PASSWORD")
                 return 1

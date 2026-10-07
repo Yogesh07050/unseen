@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Repeatable development seed for UNSEEN's PostgreSQL database.
 
-    cd unseen && server/.venv/bin/python database/seeds/seed.py
+    server/.venv/bin/python database/seeds/seed.py
 
 What it loads
   • Reference data (upserted, never duplicated): the Berean Standard Bible version

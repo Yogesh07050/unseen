@@ -1,0 +1,19 @@
+# Dependencies and virtual environments
+node_modules/
+server/.venv/
+__pycache__/
+*.pyc
+
+# Build output
+app/dist/
+
+# Secrets — copy .env.example to .env; never commit real keys
+.env
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+
+# Local tool state
+.claude/settings.local.json

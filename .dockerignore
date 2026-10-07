@@ -1,0 +1,20 @@
+# Keep the Docker build context to what the Dockerfile copies:
+# app/ (web sources), server/app, server/requirements.txt, database/.
+.git
+.claude
+docs
+eval
+scripts
+svg_images_dataset
+*.md
+.env
+.env.example
+
+# Never ship local state or the native shell into the image
+**/node_modules
+**/__pycache__
+server/.venv
+server/static
+app/dist
+app/android
+app/.claude

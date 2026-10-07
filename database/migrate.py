@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Idempotent plain-SQL migration runner.
 
-    cd unseen && server/.venv/bin/python database/migrate.py [--status]
+    server/.venv/bin/python database/migrate.py [--status]
 
 Applies every ``database/migrations/NNNN_*.sql`` file not yet recorded in
 ``schema_migrations``, in filename order, each inside its own transaction. A
