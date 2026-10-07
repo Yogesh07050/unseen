@@ -1,0 +1,24 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'>
+<defs>
+<filter id='glow' x='-60%' y='-60%' width='220%' height='220%'><feGaussianBlur stdDeviation='6' result='b'/><feMerge><feMergeNode in='b'/><feMergeNode in='SourceGraphic'/></feMerge></filter>
+<filter id='glow2' x='-80%' y='-80%' width='260%' height='260%'><feGaussianBlur stdDeviation='14'/></filter>
+<filter id='soft' filterUnits='userSpaceOnUse' x='-200' y='-300' width='800' height='1000'><feGaussianBlur stdDeviation='2.2'/></filter>
+<radialGradient id='fireglow'><stop offset='0' stop-color='#FFC56A' stop-opacity='.95'/><stop offset='.35' stop-color='#FF9A3D' stop-opacity='.45'/><stop offset='1' stop-color='#FF9A3D' stop-opacity='0'/></radialGradient>
+<radialGradient id='lightglow'><stop offset='0' stop-color='#FFF4D2' stop-opacity='.95'/><stop offset='.4' stop-color='#FFE7A6' stop-opacity='.45'/><stop offset='1' stop-color='#FFE7A6' stop-opacity='0'/></radialGradient>
+
+<radialGradient id='orbcore' cx='50%' cy='45%' r='55%'><stop offset='0' stop-color='#FFFFFF'/><stop offset='.45' stop-color='#E3F6FF'/><stop offset='.85' stop-color='#8ED3FA'/><stop offset='1' stop-color='#5BB4EC'/></radialGradient>
+<radialGradient id='orbhalo' cx='50%' cy='50%' r='50%'><stop offset='0' stop-color='#BFE9FF' stop-opacity='.9'/><stop offset='.55' stop-color='#7CC8F5' stop-opacity='.35'/><stop offset='1' stop-color='#7CC8F5' stop-opacity='0'/></radialGradient>
+</defs>
+<circle cx='130' cy='130' r='128' fill='url(#orbhalo)' opacity='0.52'/>
+
+<circle cx='130' cy='130' r='74' fill='url(#orbcore)' filter='url(#glow)'/>
+<g transform='translate(68,66) scale(.62)' opacity='.96'><g>
+ <path d='M90,112 C74,100 56,82 28,56 C34,70 38,78 43,85 C38,86 34,85 29,83 C37,95 46,101 55,105 C50,107 46,108 41,108 C54,118 69,121 85,121 Z' fill='#FFFFFF'/>
+ <path d='M90,112 C74,100 56,82 28,56 C34,70 38,78 43,85 C38,86 34,85 29,83 C37,95 46,101 55,105 C50,107 46,108 41,108 C54,118 69,121 85,121 Z' fill='#FFFFFF' transform='translate(200,0) scale(-1,1)'/>
+ <path d='M93,98 L85,72 L100,81 L115,72 L107,98 Z' fill='#FFFFFF'/>
+ <ellipse cx='100' cy='116' rx='13' ry='24' fill='#FFFFFF'/>
+ <circle cx='100' cy='143' r='9.5' fill='#FFFFFF'/>
+ <path d='M96,151 L100,160 L104,151 Z' fill='#F2C46A'/>
+</g></g>
+<circle cx='130' cy='130' r='74' fill='none' stroke='#FFFFFF' stroke-opacity='.55' stroke-width='1.2'/>
+</svg>

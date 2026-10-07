@@ -1,0 +1,30 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='300' height='320' viewBox='-70 -50 440 470'>
+<defs>
+<filter id='glow' x='-60%' y='-60%' width='220%' height='220%'><feGaussianBlur stdDeviation='6' result='b'/><feMerge><feMergeNode in='b'/><feMergeNode in='SourceGraphic'/></feMerge></filter>
+<filter id='glow2' x='-80%' y='-80%' width='260%' height='260%'><feGaussianBlur stdDeviation='14'/></filter>
+<filter id='soft' filterUnits='userSpaceOnUse' x='-200' y='-300' width='800' height='1000'><feGaussianBlur stdDeviation='2.2'/></filter>
+<radialGradient id='fireglow'><stop offset='0' stop-color='#FFC56A' stop-opacity='.95'/><stop offset='.35' stop-color='#FF9A3D' stop-opacity='.45'/><stop offset='1' stop-color='#FF9A3D' stop-opacity='0'/></radialGradient>
+<radialGradient id='lightglow'><stop offset='0' stop-color='#FFF4D2' stop-opacity='.95'/><stop offset='.4' stop-color='#FFE7A6' stop-opacity='.45'/><stop offset='1' stop-color='#FFE7A6' stop-opacity='0'/></radialGradient>
+
+<linearGradient id='feather' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#FFF8E2'/><stop offset='.6' stop-color='#F4C561' stop-opacity='.65'/><stop offset='1' stop-color='#E9A93C' stop-opacity='.08'/></linearGradient>
+<linearGradient id='robe' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#FFF4D6'/><stop offset='.45' stop-color='#F4CB72'/><stop offset='1' stop-color='#C38A31' stop-opacity='.15'/></linearGradient>
+<radialGradient id='head' cx='50%' cy='45%' r='55%'><stop offset='0' stop-color='#FFFFFF'/><stop offset='.7' stop-color='#FFF1C6'/><stop offset='1' stop-color='#F6D58E'/></radialGradient>
+<radialGradient id='halo' cx='50%' cy='50%' r='50%'><stop offset='0' stop-color='#FFE7A6' stop-opacity='.85'/><stop offset='1' stop-color='#FFE7A6' stop-opacity='0'/></radialGradient>
+</defs>
+<circle cx='150' cy='96' r='78' fill='url(#halo)'/>
+<g filter='url(#soft)' opacity='.9'><ellipse cx='140' cy='66.0' rx='12.5' ry='84.0' fill='url(#feather)' opacity='0.42' transform='rotate(-80,140,150)'/><ellipse cx='140' cy='63.0' rx='12.5' ry='87.0' fill='url(#feather)' opacity='0.47' transform='rotate(-71,140,150)'/><ellipse cx='140' cy='60.0' rx='12.5' ry='90.0' fill='url(#feather)' opacity='0.52' transform='rotate(-62,140,150)'/><ellipse cx='140' cy='57.0' rx='12.5' ry='93.0' fill='url(#feather)' opacity='0.42' transform='rotate(-53,140,150)'/><ellipse cx='140' cy='54.0' rx='12.5' ry='96.0' fill='url(#feather)' opacity='0.47' transform='rotate(-44,140,150)'/><ellipse cx='140' cy='57.0' rx='12.5' ry='93.0' fill='url(#feather)' opacity='0.52' transform='rotate(-35,140,150)'/><ellipse cx='140' cy='60.0' rx='12.5' ry='90.0' fill='url(#feather)' opacity='0.42' transform='rotate(-26,140,150)'/><ellipse cx='140' cy='63.0' rx='12.5' ry='87.0' fill='url(#feather)' opacity='0.47' transform='rotate(-17,140,150)'/><ellipse cx='160' cy='66.0' rx='12.5' ry='84.0' fill='url(#feather)' opacity='0.42' transform='rotate(17,160,150)'/><ellipse cx='160' cy='63.0' rx='12.5' ry='87.0' fill='url(#feather)' opacity='0.47' transform='rotate(26,160,150)'/><ellipse cx='160' cy='60.0' rx='12.5' ry='90.0' fill='url(#feather)' opacity='0.52' transform='rotate(35,160,150)'/><ellipse cx='160' cy='57.0' rx='12.5' ry='93.0' fill='url(#feather)' opacity='0.42' transform='rotate(44,160,150)'/><ellipse cx='160' cy='54.0' rx='12.5' ry='96.0' fill='url(#feather)' opacity='0.47' transform='rotate(53,160,150)'/><ellipse cx='160' cy='57.0' rx='12.5' ry='93.0' fill='url(#feather)' opacity='0.52' transform='rotate(62,160,150)'/><ellipse cx='160' cy='60.0' rx='12.5' ry='90.0' fill='url(#feather)' opacity='0.42' transform='rotate(71,160,150)'/><ellipse cx='160' cy='63.0' rx='12.5' ry='87.0' fill='url(#feather)' opacity='0.47' transform='rotate(80,160,150)'/></g>
+<circle cx='40' cy='230' r='34' fill='url(#lightglow)'/><circle cx='40' cy='230' r='6' fill='#FFF6DA'/>
+<path d='M127,128 Q150,117 173,128 L179,218 Q188,300 204,410 Q150,424 96,410 Q112,300 121,218 Z' fill='url(#robe)'/>
+<path d='M131,132 Q150,124 169,132 L166,196 Q150,207 134,196 Z' fill='#FFE7A6' opacity='.9'/>
+<path d='M150,134 L150,198' stroke='#D7A447' stroke-width='1.5' opacity='.6'/>
+<rect x='124' y='212' width='52' height='9' rx='3' fill='#C08A33'/>
+<circle cx='150' cy='98' r='20' fill='url(#head)' filter='url(#glow)'/>
+
+<g filter='url(#glow)'>
+ <line x1='214' y1='150' x2='104' y2='-34' stroke='#BFE9FF' stroke-width='16' stroke-linecap='round' opacity='.35'/>
+ <line x1='214' y1='150' x2='104' y2='-34' stroke='#FFFFFF' stroke-width='6' stroke-linecap='round'/>
+</g>
+<line x1='221' y1='132' x2='196' y2='147' stroke='#E3A93C' stroke-width='7' stroke-linecap='round'/>
+<path d='M172,134 Q196,138 214,152' stroke='#F6D58E' stroke-width='15' fill='none' stroke-linecap='round'/>
+<circle cx='214' cy='152' r='8' fill='#FFE7A6'/>
+</svg>

@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "bibleId": 3034,
+  "entries": [
+    { "id": "anger-1", "struggle": "anger", "lie": "He deserves it.", "truth": ["EPH.4.26", "EPH.4.27"], "support": ["PRO.15.1"] },
+    { "id": "anger-2", "struggle": "anger", "lie": "I have to win this argument.", "truth": ["JAS.1.19"], "support": ["PRO.15.1"] },
+    { "id": "fear-1", "struggle": "fear", "lie": "It's all going to fall apart.", "truth": ["PHP.4.6", "PHP.4.7"], "support": ["ISA.41.10"] },
+    { "id": "fear-2", "struggle": "fear", "lie": "You're on your own.", "truth": ["ISA.41.10"], "support": ["HEB.13.5"] },
+    { "id": "sexual-1", "struggle": "sexual", "lie": "No one will know.", "truth": ["1CO.10.13"], "support": ["GAL.5.16"] },
+    { "id": "sexual-2", "struggle": "sexual", "lie": "Just this once won't matter.", "truth": ["JAS.1.14"], "support": ["ROM.6.12"] },
+    { "id": "escapism-1", "struggle": "escapism", "lie": "Just five more minutes.", "truth": ["EPH.5.15", "EPH.5.16"], "support": ["PSA.90.12"] },
+    { "id": "shame-1", "struggle": "shame", "lie": "You're too far gone.", "truth": ["ROM.8.1"], "support": ["1JN.1.9"] },
+    { "id": "shame-2", "struggle": "shame", "lie": "God is tired of you.", "truth": ["LAM.3.22", "LAM.3.23"], "support": ["MIC.7.8"] },
+    { "id": "envy-1", "struggle": "envy", "lie": "Their life is better than yours.", "truth": ["GAL.6.4"], "support": ["PHP.4.11", "PHP.4.12", "PHP.4.13"] },
+    { "id": "compulsion-1", "struggle": "compulsion", "lie": "You need this to cope.", "truth": ["GAL.5.1"], "support": ["2CO.12.9"] },
+    { "id": "deceit-1", "struggle": "deceit", "lie": "A small lie protects everyone.", "truth": ["EPH.4.25"], "support": ["PRO.12.22"] },
+    { "id": "pride-1", "struggle": "pride", "lie": "You don't need anyone.", "truth": ["JAS.4.6"], "support": ["ECC.4.9", "ECC.4.10"] }
+  ],
+  "defaults": {
+    "anger": ["EPH.4.26", "EPH.4.27"], "fear": ["PHP.4.6", "PHP.4.7"], "sexual": ["1CO.10.13"],
+    "escapism": ["EPH.5.15", "EPH.5.16"], "shame": ["ROM.8.1"], "envy": ["GAL.6.4"],
+    "compulsion": ["GAL.5.1"], "deceit": ["EPH.4.25"], "pride": ["JAS.4.6"], "other": ["1CO.10.13"]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "unseen",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "UNSEEN — tooling: AI evaluation and verse checks (run against a live API).",
+  "scripts": {
+    "eval": "tsx eval/run.ts",
+    "check:verses": "tsx scripts/check-verses.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.1"
+  }
+}

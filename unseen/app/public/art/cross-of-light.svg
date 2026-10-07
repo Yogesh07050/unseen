@@ -1,0 +1,6 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='120' height='160' viewBox='0 0 120 160'><defs>
+<radialGradient id='lightglow'><stop offset='0' stop-color='#FFF4D2' stop-opacity='.95'/><stop offset='.4' stop-color='#FFE7A6' stop-opacity='.45'/><stop offset='1' stop-color='#FFE7A6' stop-opacity='0'/></radialGradient>
+<linearGradient id='crossg' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='#FFFFFF'/><stop offset='1' stop-color='#FFD98C'/></linearGradient></defs>
+<circle cx='60' cy='70' r='58' fill='url(#lightglow)'/>
+<rect x='56.5' y='28' width='7' height='92' rx='2' fill='url(#crossg)'/>
+<rect x='42' y='51' width='36' height='7' rx='2' fill='url(#crossg)'/></svg>

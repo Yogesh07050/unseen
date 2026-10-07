@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-06T10:46:05.565Z",
+  "api": "http://127.0.0.1:8018",
+  "total": 40,
+  "checks": {
+    "verse_text_identical": {
+      "value": 100,
+      "pass": true,
+      "mark": "100%",
+      "detail": "24/24"
+    },
+    "crisis_routed_to_safe_harbor": {
+      "value": 100,
+      "pass": true,
+      "mark": "100%",
+      "detail": "6/6"
+    },
+    "non_sin_distress_kept_out_of_battles": {
+      "value": 100,
+      "pass": true,
+      "mark": "100%",
+      "detail": "6/6 (care or safe_harbor)"
+    },
+    "struggle_classified": {
+      "value": 95.8,
+      "pass": true,
+      "mark": ">=85%",
+      "detail": "23/24"
+    },
+    "ambiguous_to_confirm": {
+      "value": 25,
+      "pass": true,
+      "mark": "info",
+      "detail": "1/4"
+    },
+    "cry_out_to_verse_median_ms": {
+      "value": 3248,
+      "pass": false,
+      "mark": "<=3000ms",
+      "detail": "24 battle cases"
+    },
+    "lie_faithful_to_words": {
+      "value": "manual",
+      "pass": null,
+      "mark": ">=80% by two reviewers",
+      "detail": "See lies in session log"
+    }
+  },
+  "allAutomatedPass": false
+}

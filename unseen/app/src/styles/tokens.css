@@ -1,0 +1,75 @@
+/* UNSEEN design tokens — premium light (warm white + antique gold).
+   Cinematic screens (battle, cry-out, discern, peace) opt back into the
+   dark "unseen realm" palette via the .cinematic scope at the bottom. */
+@font-face { font-family: 'Alegreya'; src: url('/fonts/alegreya-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Alegreya'; src: url('/fonts/alegreya-latin-500-italic.woff2') format('woff2'); font-weight: 500; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Alegreya'; src: url('/fonts/alegreya-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Alegreya'; src: url('/fonts/alegreya-latin-800-normal.woff2') format('woff2'); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Alegreya Sans'; src: url('/fonts/alegreya-sans-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Alegreya Sans'; src: url('/fonts/alegreya-sans-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Alegreya Sans'; src: url('/fonts/alegreya-sans-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+
+:root {
+  /* Surfaces & background (names kept for compatibility: --night-* = page bg) */
+  --night-1: #FDFBF6;  --night-2: #F3EEE1;
+  --surface: #FFFFFF;  --surface-2: #FAF7F0;  --surface-sunk: #F6F2E9;
+
+  /* Ink */
+  --text: #26211A;  --muted: #726A5B;  --faint: #A79E8C;
+
+  /* Hairlines */
+  --line: rgba(42,34,20,0.09);  --line-strong: rgba(42,34,20,0.15);
+
+  /* Antique gold — the signature accent */
+  --gold: #B8912E;  --gold-hi: #9A7A1E;  --gold-deep: #7A5E16;
+  --gold-soft: rgba(184,145,46,0.10);  --gold-line: rgba(184,145,46,0.34);
+  --illumination: #A2690F;
+
+  /* Supporting hues (muted for light) */
+  --spirit: #4E8BC6;  --spirit-2: #6BA3D8;
+  --ember: #C6502A;  --rose: #B06E88;
+
+  /* Scripture vellum (parchment — identical in both themes) */
+  --vellum: #F7EFD8;  --vellum-2: #ECDDB4;  --ink: #2C2014;  --ink-muted: #6E5B42;
+
+  /* Safe Harbor (already a light refuge) */
+  --harbor-bg-1: #FBF4E8;  --harbor-bg-2: #F1DEC2;  --harbor-ink: #2A2346;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 2px rgba(42,34,20,.05), 0 4px 12px rgba(42,34,20,.05);
+  --shadow-md: 0 2px 6px rgba(42,34,20,.05), 0 14px 34px rgba(42,34,20,.08);
+  --shadow-gold: 0 10px 26px rgba(184,145,46,.26);
+
+  /* Radii & spacing */
+  --r-panel: 20px;  --r-pill: 27px;  --r-chip: 16px;  --r-vellum: 6px;  --r-card: 22px;
+  --pad-screen: 22px;
+
+  /* Type */
+  --serif: 'Alegreya', Georgia, 'Times New Roman', serif;
+  --sans: 'Alegreya Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+  color-scheme: light;
+}
+
+/* ── Cinematic "unseen realm" — dark palette for the battle flow ──────────── */
+.cinematic {
+  --night-1: #17193F;  --night-2: #0C0E29;
+  --surface: rgba(255,255,255,0.055);  --surface-2: rgba(255,255,255,0.03);  --surface-sunk: rgba(0,0,0,0.18);
+
+  --text: #EEEAF8;  --muted: #A9ACD2;  --faint: #7E82AB;
+  --line: rgba(237,232,247,0.14);  --line-strong: rgba(237,232,247,0.24);
+
+  --gold: #F2B544;  --gold-hi: #FFDC8F;  --gold-deep: #B9822C;
+  --gold-soft: rgba(242,181,68,0.12);  --gold-line: rgba(242,181,68,0.42);
+
+  --spirit: #BFE9FF;  --spirit-2: #7CC8F5;
+  --ember: #E8592F;  --rose: #DDA7B8;
+
+  --shadow-sm: 0 6px 16px rgba(0,0,0,.34);
+  --shadow-md: 0 12px 30px rgba(0,0,0,.4);
+  --shadow-gold: 0 10px 26px rgba(242,181,68,.3);
+
+  color-scheme: dark;
+  background: linear-gradient(180deg, var(--night-1) 0%, var(--night-2) 100%);
+  color: var(--text);
+}

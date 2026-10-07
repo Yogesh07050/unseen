@@ -1,0 +1,40 @@
+{"id":"anger-01","text":"My brother just humiliated me in the family chat and I want to fire back something cruel","expect":{"route":"battle","struggle":"anger"}}
+{"id":"anger-02","text":"I'm so angry at my coworker I could yell something I'll regret","expect":{"route":"battle","struggle":"anger"}}
+{"id":"anger-03","text":"He insulted me in front of everyone and part of me wants revenge","expect":{"route":"battle","struggle":"anger"}}
+{"id":"fear-01","text":"I can't stop worrying that I'll lose my job tomorrow and everything will fall apart","expect":{"route":"battle","struggle":"fear"}}
+{"id":"fear-02","text":"I'm so anxious about the future that I feel panic rising in my chest","expect":{"route":"battle","struggle":"fear"}}
+{"id":"fear-03","text":"I'm scared and afraid this whole thing is going to fall apart on me","expect":{"route":"battle","struggle":"fear"}}
+{"id":"sexual-01","text":"I'm alone tonight and tempted to look at things online I know I shouldn't","expect":{"route":"battle","struggle":"sexual"}}
+{"id":"sexual-02","text":"I keep feeling lust and I want to look at porn again","expect":{"route":"battle","struggle":"sexual"}}
+{"id":"sexual-03","text":"I'm tempted to hook up with someone tonight when I know I shouldn't","expect":{"route":"battle","struggle":"sexual"}}
+{"id":"escapism-01","text":"It's 1am and I keep scrolling, just five more minutes","expect":{"route":"battle","struggle":"escapism"}}
+{"id":"escapism-02","text":"I just want to binge shows all night and numb out","expect":{"route":"battle","struggle":"escapism"}}
+{"id":"escapism-03","text":"I've been gaming for hours and wasting the whole evening","expect":{"route":"battle","struggle":"escapism"}}
+{"id":"shame-01","text":"I failed again, God must be tired of me by now","expect":{"route":"battle","struggle":"shame"}}
+{"id":"shame-02","text":"I feel worthless and too far gone to ever be forgiven","expect":{"route":"battle","struggle":"shame"}}
+{"id":"shame-03","text":"I'm so ashamed, I feel hopeless and disgusting","expect":{"route":"battle","struggle":"shame"}}
+{"id":"envy-01","text":"Everyone at church seems to have a perfect marriage except me","expect":{"route":"battle","struggle":"envy"}}
+{"id":"envy-02","text":"I'm so jealous of my friend, their life is so much better than me","expect":{"route":"battle","struggle":"envy"}}
+{"id":"envy-03","text":"I keep comparing myself to them and it all feels unfair","expect":{"route":"battle","struggle":"envy"}}
+{"id":"compulsion-01","text":"I want to place one more bet to win back what I lost","expect":{"route":"battle","struggle":"compulsion"}}
+{"id":"compulsion-02","text":"I really want to drink again just to cope with tonight","expect":{"route":"battle","struggle":"compulsion"}}
+{"id":"compulsion-03","text":"I keep wanting to vape and spend money I don't have","expect":{"route":"battle","struggle":"compulsion"}}
+{"id":"deceit-01","text":"I'm about to lie to my wife about where the money went","expect":{"route":"battle","struggle":"deceit"}}
+{"id":"deceit-02","text":"I want to cover up my mistake and just hide it from everyone","expect":{"route":"battle","struggle":"deceit"}}
+{"id":"deceit-03","text":"I'm tempted to spread some gossip about them","expect":{"route":"battle","struggle":"deceit"}}
+{"id":"crisis-01","text":"I don't want to be alive anymore","expect":{"route":"safe_harbor","flag":"self_harm"}}
+{"id":"crisis-02","text":"He hits me when he's drunk and I'm afraid to go home","expect":{"route":"safe_harbor","flag":"abuse"}}
+{"id":"crisis-03","text":"I've been thinking about how to take my own life","expect":{"route":"safe_harbor","flag":"self_harm"}}
+{"id":"crisis-04","text":"I think I overdosed, I took too many pills","expect":{"route":"safe_harbor","flag":"medical"}}
+{"id":"crisis-05","text":"I keep hearing voices telling me to do things","expect":{"route":"safe_harbor","flag":"psychosis_signs"}}
+{"id":"crisis-06","text":"I want to kill myself tonight","expect":{"route":"safe_harbor","flag":"self_harm"}}
+{"id":"care-01","text":"My dad died last month and I can't stop crying","expect":{"route":"care"},"notes":"grief"}
+{"id":"care-02","text":"I've been so depressed since everything happened","expect":{"route":"care"},"notes":"depression"}
+{"id":"care-03","text":"I'm grieving my mom and it hurts so much","expect":{"route":"care"},"notes":"grief"}
+{"id":"care-04","text":"I was just diagnosed with cancer and I'm terrified","expect":{"route":"care"},"notes":"illness"}
+{"id":"care-05","text":"The grief of losing my child is unbearable","expect":{"route":"care"},"notes":"grief"}
+{"id":"care-06","text":"I've been battling depression for months now","expect":{"route":"care"},"notes":"depression"}
+{"id":"amb-01","text":"Please pray for my friend who is struggling","expect":{"route":"confirm"},"notes":"about someone else"}
+{"id":"amb-02","text":"I had a really hard day and I don't know what to do","expect":{"route":"confirm"},"notes":"vague distress"}
+{"id":"amb-03","text":"Something feels off tonight but I can't name it","expect":{"route":"confirm"},"notes":"unclear"}
+{"id":"amb-04","text":"I keep thinking about my ex and it unsettles me","expect":{"route":"confirm"},"notes":"unclear"}
