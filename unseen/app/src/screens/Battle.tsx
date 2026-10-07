@@ -57,14 +57,16 @@ export function Battle() {
     return () => { alive = false; };
   }, [fullVerseText]);
 
-  // Navigate to peace on climax
+  // Navigate to peace on climax — wait for the finale to play out (angel flies
+  // away, then the devil dissolves completely) before moving on.
   useEffect(() => {
     if (state === 'climax') {
       stopRealtimeVoice();
-      const t = setTimeout(() => navigate('/peace', { replace: true }), 2200);
+      const delay = settings?.reduceMotion ? 1600 : 5000;
+      const t = setTimeout(() => navigate('/peace', { replace: true }), delay);
       return () => clearTimeout(t);
     }
-  }, [state, navigate]);
+  }, [state, navigate, settings?.reduceMotion]);
 
   // Cleanup on unmount
   useEffect(() => {
