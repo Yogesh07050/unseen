@@ -14,15 +14,20 @@ from YouVersion).
 
 | Table | Purpose |
 | --- | --- |
-| `user_profiles` | One row per install: first name, tradition, Bible version, onboarding time, and the full Settings object (`data`). |
+| `users` | Accounts: `id`, unique lower-case `username`, scrypt `password_hash` (per-user salt, parameters in the string), created/last-login times. Never a plain password. |
+| `sessions` | Bearer sessions: `token_hash` (SHA-256 of the token the phone holds), user, install, created/last-seen/expires/revoked. |
+| `user_profiles` | One row per account (or per anonymous install before sign-in): first name, tradition, Bible version, onboarding time, and the full Settings object (`data`). |
 | `user_battles` | Every battle: when, struggle, outcome, the lie in the person's words, context, intensity, verse references (columns) + the whole Battle object (`data`). |
 | `user_stones` | Ebenezer stones (`stood`, `rose_again`, `from_memory`) with date and verse reference. |
 | `user_allies` | Up to three allies who agreed to pray (name, optional phone/role, consent time). |
 | `user_armory` | Verses the person has stood with: sharpness 0–5, drill schedule, wins. |
 | `user_watch` | Kairos Watch windows the phone derived (weekday, hours, level, reason, plan). |
 
-All six carry `updated_at` (last-write-wins across devices) and `deleted_at`
-(soft delete, so another device learns of it on its next pull).
+All six carry `account_id` (the owner; NULL only for rows recorded before the
+phone signed in — claimed by the account at sign-in), `updated_at`
+(last-write-wins across devices) and `deleted_at` (soft delete, so another
+device learns of it on its next pull). `installs.user_id` records which
+devices have signed in to which account.
 `installs.synthetic` marks rows created by `seeds/seed.py`; real devices are
 never synthetic and are never deleted by the seed.
 
@@ -83,11 +88,11 @@ server/.venv/bin/python database/migrate.py          # add --status to just insp
 # 3. Reference data + synthetic analytics rows (repeatable; never touches real devices)
 server/.venv/bin/python database/seeds/seed.py
 
-# 3b. Give a real install an eight-week history (Stones, Schemes, Watch, Armory, Allies).
-#     Open the app once so the server has seen the install, then:
+# 3b. Give an account an eight-week history (Stones, Schemes, Watch, Armory, Allies);
+#     creates the user when missing (password: SEED_USER_PASSWORD in .env or --password):
+server/.venv/bin/python database/seeds/seed_user.py --username yogesh --name Yogesh
+#     Anonymous (pre-sign-in) installs can be filled too:
 server/.venv/bin/python database/seeds/seed_user.py --all-recent --name Yogesh
-#     or one device (Settings shows the install id's first 8 characters):
-server/.venv/bin/python database/seeds/seed_user.py --install <uuid> --name Yogesh --replace
 
 # 4. Start the API — it connects on boot (GET /api/health → "postgres": true)
 cd server && .venv/bin/python -m uvicorn app.main:app --reload --port 8000
@@ -112,9 +117,13 @@ the migrations against the `postgres` service before `app` starts.
 - Every `/api/*` request upserts `installs` (middleware, fire-and-forget).
 - `POST /api/discern|truth|compose|insight` → INSERT `ai_interactions` (metadata only).
 - `GET /api/truth-index` → the Truth Index joined from the four reference tables.
-- `GET /api/me?since=` → rows of the six `user_*` tables changed since the phone's
-  last pull; `POST /api/me` → batched upserts/deletes from the phone's outbox
-  (last-write-wins by `updatedAt`); `DELETE /api/me` → "Delete everything".
+- `POST /api/auth/register|login` → `users` + `sessions` (+ `claim_install`: links the
+  install and attaches its anonymous rows to the account); `POST /api/auth/logout`
+  → revokes; every `/api/me` call resolves the bearer token through `sessions`.
+- `GET /api/me?since=` → the account's rows of the six `user_*` tables changed since
+  the phone's last pull; `POST /api/me` → batched upserts/deletes from the phone's
+  outbox (matched on `(account_id, id)`, last-write-wins by `updatedAt`);
+  `DELETE /api/me` → "Delete everything".
 
 ## Verify it yourself
 

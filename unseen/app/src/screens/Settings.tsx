@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button, Chip, Panel, Toggle } from '../components/ui';
 import { BibleList } from '../components/BibleList';
 import { attribution, useBibleInfo, useBibles } from '../engines/bibles';
-import { useSettings, useUi } from '../store';
+import { useAuth, useSettings, useUi } from '../store';
 import { downloadExportJson } from '../data/export';
 import { wipeEverything } from '../data/db';
 import { resetKeyCache } from '../data/crypto';
@@ -16,6 +16,7 @@ export function SettingsScreen() {
   const { showToast } = useUi();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [pickVersion, setPickVersion] = useState(false);
+  const { user, logout } = useAuth();
   const s = settings;
   const bible = useBibleInfo(s?.bibleId ?? 3034);
   const { catalog } = useBibles();
@@ -91,9 +92,16 @@ export function SettingsScreen() {
       </Panel>
 
       <Panel>
-        <p className="tiny" style={{ margin: 0 }}>
-          Your battles, stones, allies and Armory are saved on this phone and backed up to UNSEEN under this install only
-          (no account, no e-mail). Your spoken words never leave the phone. Install id: {installId().slice(0, 8)}.
+        <div className="row" style={{ justifyContent: 'space-between' }}>
+          <div>
+            <strong>@{user?.username ?? 'signed out'}</strong>
+            <div className="tiny">Signed in on this phone</div>
+          </div>
+          <Chip label="Sign out" onClick={async () => { await logout(); window.location.replace('/'); }} />
+        </div>
+        <p className="tiny" style={{ margin: '10px 0 0' }}>
+          Your battles, stones, allies and Armory are saved on this phone and kept for your account on UNSEEN, so they
+          follow you to a new phone. Your spoken words never leave this phone. Install id: {installId().slice(0, 8)}.
         </p>
       </Panel>
 
@@ -109,7 +117,7 @@ export function SettingsScreen() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(38,33,26,.5)', backdropFilter: 'blur(3px)', display: 'grid', placeItems: 'center', zIndex: 60, padding: 24 }}>
           <div className="card" style={{ maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <h2 className="section-title">Delete everything</h2>
-            <p className="body" style={{ margin: 0 }}>This deletes every battle, stone, ally and setting on this phone and its backup on UNSEEN. It cannot be undone.</p>
+            <p className="body" style={{ margin: 0 }}>This deletes every battle, stone, ally and setting on this phone and from your account on UNSEEN. It cannot be undone.</p>
             <Button onClick={async () => { await wipeRemote(); await wipeEverything(); resetKeyCache(); location.href = '/'; }}>Delete it all</Button>
             <Button variant="ghost" onClick={() => setConfirmDelete(false)}>Keep my data</Button>
           </div>

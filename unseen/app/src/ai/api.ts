@@ -3,6 +3,7 @@
 import { Capacitor } from '@capacitor/core';
 import type { ContextType, Discernment, Front, Struggle, Trigger } from '../types';
 import { apiUrl } from './base';
+import { clearSession, getToken, type AuthUser } from '../data/auth';
 
 const INSTALL_KEY = 'unseen-install-id';
 // 'android' | 'ios' | 'web' — lets the server's anonymous install registry tell
@@ -19,12 +20,22 @@ export function installId(): string {
 }
 
 function headers(): HeadersInit {
-  return {
+  const h: Record<string, string> = {
     'Content-Type': 'application/json',
     'X-Install-Id': installId(),
     'X-Client-Version': '1.0.0',
     'X-Client-Platform': PLATFORM,
   };
+  const token = getToken();
+  if (token) h.Authorization = `Bearer ${token}`;
+  return h;
+}
+
+// A session the server no longer accepts: forget it and let the app show sign-in.
+function sessionEnded() {
+  if (!getToken()) return;
+  clearSession();
+  window.dispatchEvent(new Event('unseen:signed-out'));
 }
 
 async function req<T>(path: string, init?: RequestInit, timeoutMs = 10000): Promise<T> {
@@ -34,7 +45,9 @@ async function req<T>(path: string, init?: RequestInit, timeoutMs = 10000): Prom
     const res = await fetch(apiUrl(`/api${path}`), { ...init, headers: headers(), signal: ctrl.signal });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      throw new ApiError(res.status, body?.error?.code ?? 'error', body?.error?.message ?? res.statusText);
+      const code = body?.error?.code ?? 'error';
+      if (res.status === 401 && code === 'unauthorized' && !path.startsWith('/auth/')) sessionEnded();
+      throw new ApiError(res.status, code, body?.error?.message ?? res.statusText);
     }
     return (await res.json()) as T;
   } finally {
@@ -78,6 +91,7 @@ export interface SyncPushBody {
   deletes: { collection: string; id: string }[];
 }
 export interface SyncAck { ok: boolean; now: number; available: boolean }
+export interface AuthResponse { token: string; user: AuthUser; expiresAt: number; claimed?: Record<string, number> }
 export interface ComposeResponse { reflection: string; escapes: string[]; gentleReply?: string | null }
 
 export const api = {
@@ -139,6 +153,14 @@ export const api = {
 
   verseSearch: (q: string, bibleId: number) =>
     req<{ references: string[] }>(`/verse-search?q=${encodeURIComponent(q)}&bibleId=${bibleId}`, { method: 'GET' }, 3000),
+
+  // Accounts (routers/auth.py)
+  authRegister: (username: string, password: string) =>
+    req<AuthResponse>('/auth/register', { method: 'POST', body: JSON.stringify({ username, password }) }, 15000),
+  authLogin: (username: string, password: string) =>
+    req<AuthResponse>('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }, 15000),
+  authLogout: () => req<{ ok: boolean }>('/auth/logout', { method: 'POST' }, 8000),
+  authMe: () => req<AuthUser>('/auth/me', { method: 'GET' }, 8000),
 
   votd: (day: number) => req<{ day: number; passageId: string }>(`/votd?day=${day}`, { method: 'GET' }, 4000),
 

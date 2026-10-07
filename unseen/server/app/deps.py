@@ -5,6 +5,8 @@ import time
 
 from fastapi import Header, HTTPException, Request
 
+from .services import auth, db
+
 
 def body_limit(max_bytes: int):
     async def dependency(request: Request):
@@ -24,3 +26,18 @@ def rate_limit(name: str, limit: int, window_s: int, by: str = "install"):
         if n > limit:
             raise HTTPException(429, detail={"code": "rate_limited", "message": "Too many requests"})
     return dependency
+
+
+async def current_user(request: Request, authorization: str | None = Header(default=None)) -> dict:
+    """The signed-in user behind the bearer token, or 401. Needs the database."""
+    token = auth.bearer(authorization)
+    if not token:
+        raise HTTPException(401, detail={"code": "unauthorized", "message": "Sign in to continue"})
+    pool = request.app.state.db
+    if pool is None:
+        raise HTTPException(503, detail={"code": "no_database", "message": "Accounts need the database"})
+    user = await db.get_session_user(pool, auth.token_hash(token))
+    if not user:
+        raise HTTPException(401, detail={"code": "unauthorized", "message": "Your session has ended. Sign in again."})
+    request.state.user = user
+    return user

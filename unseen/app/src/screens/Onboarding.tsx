@@ -57,8 +57,8 @@ export function Onboarding() {
         <span className="wordmark">UNSEEN</span>
         <h1 className="title">You are not alone in this fight.</h1>
         <p className="body">When temptation speaks, answer it the way Jesus did, with Scripture. UNSEEN finds the right verse in seconds and remembers every battle, privately.</p>
-        <p className="small muted">No account. Nothing to sign up for.</p>
-        <p className="small muted">Your battle log stays on this phone, behind your screen lock.</p>
+        <p className="small muted">Just a username and password. No e-mail, nothing else to give.</p>
+        <p className="small muted">Your battle log is private to your account and sealed on this phone.</p>
         <div className="spacer" />
         <Button onClick={() => go('age')}>Open my eyes</Button>
       </div>

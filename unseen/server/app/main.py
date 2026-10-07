@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse
 from .config import settings
 from .errors import install_error_handlers
 from .middleware import SecurityHeaders, Timing
-from .routers import ai, bible, health, pray, speech, sync, truth
+from .routers import ai, auth, bible, health, pray, speech, sync, truth
 from .services import db, kv, youversion
 
 log = logging.getLogger("unseen")
@@ -53,7 +53,7 @@ if _cors:
         CORSMiddleware,
         allow_origins=_cors,
         allow_methods=["GET", "POST", "DELETE"],
-        allow_headers=["Content-Type", "X-Install-Id", "X-Client-Version", "X-Client-Platform"],
+        allow_headers=["Content-Type", "Authorization", "X-Install-Id", "X-Client-Version", "X-Client-Platform"],
         max_age=600,
     )
 
@@ -74,7 +74,7 @@ async def track_install(request, call_next):
 
 
 install_error_handlers(app)
-for r in (ai.router, bible.router, pray.router, speech.router, health.router, truth.router, sync.router):
+for r in (ai.router, auth.router, bible.router, pray.router, speech.router, health.router, truth.router, sync.router):
     app.include_router(r, prefix="/api")
 
 STATIC = Path(settings.static_dir).resolve()

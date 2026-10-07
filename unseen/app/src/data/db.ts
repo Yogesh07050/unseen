@@ -28,3 +28,10 @@ export async function wipeEverything(): Promise<void> {
     await Promise.all(names.filter((n) => n.startsWith('unseen-')).map((n) => caches.delete(n)));
   }
 }
+
+// Everything personal on this device (sealed rows, outbox, key) — keeps the public
+// verse cache so Scripture is still there offline. Used at sign-in and sign-out.
+export async function clearCachedPersonalData(): Promise<void> {
+  const personal = ['battles', 'stones', 'transcripts', 'lieClusters', 'armory', 'watch', 'allies', 'settings', 'events', 'keys', 'outbox'];
+  await Promise.all(personal.map((t) => db.table(t).clear().catch(() => undefined)));
+}

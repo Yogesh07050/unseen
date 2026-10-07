@@ -387,3 +387,179 @@ async def user_counts(pool: Pool, install_id: str) -> dict[str, int]:
             out[col] = await c.fetchval(
                 f"SELECT count(*) FROM {table} WHERE install_id = $1 AND deleted_at IS NULL", iid)
     return out
+
+
+# ───────────────────────────── Accounts: users and sessions ──────────────────
+
+async def create_user(pool: Pool, username: str, password_hash: str) -> dict | None:
+    """Insert a user; None when the username is taken."""
+    async with pool.acquire() as c:
+        row = await c.fetchrow(
+            """INSERT INTO users (username, password_hash) VALUES ($1, $2)
+               ON CONFLICT (username) DO NOTHING RETURNING id, username""", username, password_hash)
+    return dict(row) if row else None
+
+
+async def get_user_by_username(pool: Pool, username: str) -> dict | None:
+    async with pool.acquire() as c:
+        row = await c.fetchrow("SELECT id, username, password_hash FROM users WHERE username = $1", username)
+    return dict(row) if row else None
+
+
+async def touch_login(pool: Pool, user_id: uuid.UUID) -> None:
+    async with pool.acquire() as c:
+        await c.execute("UPDATE users SET last_login_at = now(), updated_at = now() WHERE id = $1", user_id)
+
+
+async def create_session(pool: Pool, user_id: uuid.UUID, token_hash: str, install_id: str | None,
+                         expires_at: "datetime") -> None:
+    iid = as_uuid(install_id)
+    async with pool.acquire() as c, c.transaction():
+        await _ensure_install(c, iid)
+        await c.execute(
+            "INSERT INTO sessions (token_hash, user_id, install_id, expires_at) VALUES ($1, $2, $3, $4)",
+            token_hash, user_id, iid, expires_at)
+        # Housekeeping: sessions long past expiry are of no use to anyone.
+        await c.execute("DELETE FROM sessions WHERE expires_at < now() - interval '30 days'")
+
+
+async def get_session_user(pool: Pool, token_hash: str) -> dict | None:
+    """The user behind a live session (not expired, not revoked); bumps last_seen."""
+    async with pool.acquire() as c:
+        row = await c.fetchrow(
+            """UPDATE sessions s SET last_seen_at = now()
+               FROM users u
+               WHERE s.token_hash = $1 AND s.user_id = u.id AND s.revoked_at IS NULL AND s.expires_at > now()
+               RETURNING u.id, u.username, s.install_id""", token_hash)
+    return dict(row) if row else None
+
+
+async def revoke_session(pool: Pool, token_hash: str) -> None:
+    async with pool.acquire() as c:
+        await c.execute("UPDATE sessions SET revoked_at = now() WHERE token_hash = $1 AND revoked_at IS NULL", token_hash)
+
+
+async def claim_install(pool: Pool, user_id: uuid.UUID, install_id: str | None) -> dict[str, int]:
+    """Signing in on an install: link it to the account and attach the anonymous
+    history that install recorded before (rows with account_id NULL). The
+    profile is attached only when the account has none yet; otherwise the
+    install's anonymous profile is dropped in favour of the account's."""
+    iid = as_uuid(install_id)
+    counts: dict[str, int] = {}
+    if iid is None:
+        return counts
+    async with pool.acquire() as c, c.transaction():
+        await _ensure_install(c, iid)
+        await c.execute("UPDATE installs SET user_id = $1 WHERE install_id = $2", user_id, iid)
+        for col, table in _TABLE.items():
+            status = await c.execute(
+                f"""UPDATE {table} t SET account_id = $1
+                    WHERE t.install_id = $2 AND t.account_id IS NULL
+                      AND NOT EXISTS (SELECT 1 FROM {table} o WHERE o.account_id = $1 AND o.id = t.id)""",
+                user_id, iid)
+            counts[col] = int(status.split()[-1])
+        has_profile = await c.fetchval("SELECT 1 FROM user_profiles WHERE account_id = $1", user_id)
+        if has_profile:
+            await c.execute("DELETE FROM user_profiles WHERE install_id = $1 AND account_id IS NULL", iid)
+            counts["profile"] = 0
+        else:
+            status = await c.execute(
+                "UPDATE user_profiles SET account_id = $1 WHERE install_id = $2 AND account_id IS NULL", user_id, iid)
+            counts["profile"] = int(status.split()[-1])
+    return counts
+
+
+# ───────────────────────────── Account-keyed sync ────────────────────────────
+
+async def upsert_account_rows(c: asyncpg.Connection, account_id: uuid.UUID, iid: uuid.UUID, collection: str,
+                              rows: Iterable[dict]) -> int:
+    """Like upsert_user_rows but owned by the account: the row is matched on
+    (account_id, id) whichever install wrote it; install_id records the writer."""
+    table = _TABLE[collection]
+    n = 0
+    for d in rows:
+        if not isinstance(d, dict):
+            continue
+        try:
+            rid = _str_id(d.get("id"))
+            cols, vals = _columns(collection, d)
+        except ValueError:
+            continue
+        updated = _ms_to_ts(d.get("updatedAt")) or datetime.now(timezone.utc)
+        names = ["install_id", "account_id", "id", *cols, "data", "updated_at", "deleted_at"]
+        params = [iid, account_id, rid, *vals, json.dumps(d), updated, None]
+        placeholders = ", ".join(f"${i + 1}" for i in range(len(params)))
+        sets = ", ".join(f"{col} = EXCLUDED.{col}" for col in ["install_id", *cols, "data", "updated_at", "deleted_at"])
+        await c.execute(
+            f"INSERT INTO {table} ({', '.join(names)}) VALUES ({placeholders}) "
+            f"ON CONFLICT (account_id, id) WHERE account_id IS NOT NULL DO UPDATE SET {sets} "
+            f"WHERE {table}.updated_at <= EXCLUDED.updated_at",
+            *params)
+        n += 1
+    return n
+
+
+async def upsert_account_profile(c: asyncpg.Connection, account_id: uuid.UUID, iid: uuid.UUID, profile: dict) -> None:
+    updated = _ms_to_ts(profile.get("updatedAt")) or datetime.now(timezone.utc)
+    await c.execute(
+        """INSERT INTO user_profiles (install_id, account_id, first_name, tradition, bible_id, onboarded_at, data, updated_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+           ON CONFLICT (account_id) WHERE account_id IS NOT NULL DO UPDATE SET
+               install_id = EXCLUDED.install_id, first_name = EXCLUDED.first_name, tradition = EXCLUDED.tradition,
+               bible_id = EXCLUDED.bible_id, onboarded_at = EXCLUDED.onboarded_at, data = EXCLUDED.data,
+               updated_at = EXCLUDED.updated_at
+           WHERE user_profiles.updated_at <= EXCLUDED.updated_at""",
+        iid, account_id, (str(profile.get("firstName"))[:60] if profile.get("firstName") else None),
+        profile.get("tradition") if profile.get("tradition") in ("evangelical", "catholic", "mainline") else None,
+        _int(profile.get("bibleId")) or 3034, _ms_to_ts(profile.get("onboardedAt")) or None,
+        json.dumps(profile), updated)
+
+
+async def push_account(pool: Pool, account_id: uuid.UUID, install_id: str | None, profile: dict | None,
+                       upserts: dict[str, list[dict]], deletes: list[tuple[str, str]]) -> dict[str, int]:
+    iid = as_uuid(install_id) or uuid.uuid4()
+    counts = {"upserts": 0, "deletes": 0, "profile": 0}
+    async with pool.acquire() as c, c.transaction():
+        await _ensure_install(c, iid)
+        if profile:
+            await upsert_account_profile(c, account_id, iid, profile)
+            counts["profile"] = 1
+        for collection, rows in upserts.items():
+            if collection in _TABLE:
+                counts["upserts"] += await upsert_account_rows(c, account_id, iid, collection, rows)
+        for collection, rid in deletes:
+            table = _TABLE.get(collection)
+            if table:
+                await c.execute(
+                    f"UPDATE {table} SET deleted_at = now(), updated_at = now() WHERE account_id = $1 AND id = $2",
+                    account_id, str(rid)[:128])
+                counts["deletes"] += 1
+    return counts
+
+
+async def pull_account(pool: Pool, account_id: uuid.UUID, since_ms: int) -> dict[str, Any]:
+    out: dict[str, Any] = {"now": int(datetime.now(timezone.utc).timestamp() * 1000), "profile": None}
+    for col in USER_COLLECTIONS:
+        out[col] = []
+    since = _ms_to_ts(max(0, since_ms)) or datetime.fromtimestamp(0, tz=timezone.utc)
+    async with pool.acquire() as c:
+        prow = await c.fetchrow(
+            "SELECT data, updated_at FROM user_profiles WHERE account_id = $1 AND updated_at > $2", account_id, since)
+        if prow:
+            out["profile"] = json.loads(prow["data"]) | {"updatedAt": _ts_to_ms(prow["updated_at"])}
+        for col in USER_COLLECTIONS:
+            rows = await c.fetch(
+                f"SELECT id, data, updated_at, deleted_at FROM {_TABLE[col]} "
+                f"WHERE account_id = $1 AND updated_at > $2 ORDER BY updated_at", account_id, since)
+            for r in rows:
+                if r["deleted_at"] is not None:
+                    out[col].append({"id": r["id"], "deleted": True, "updatedAt": _ts_to_ms(r["updated_at"])})
+                else:
+                    out[col].append(json.loads(r["data"]) | {"id": r["id"], "updatedAt": _ts_to_ms(r["updated_at"])})
+    return out
+
+
+async def wipe_account(pool: Pool, account_id: uuid.UUID) -> None:
+    async with pool.acquire() as c, c.transaction():
+        for table in (*_TABLE.values(), "user_profiles"):
+            await c.execute(f"DELETE FROM {table} WHERE account_id = $1", account_id)

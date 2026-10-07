@@ -2,14 +2,19 @@
 """Fill a real install with a believable eight-week history, so Stones, Schemes,
 Watch, Armory and Allies show a lived-in account from the first open.
 
-    cd unseen && server/.venv/bin/python database/seeds/seed_user.py --all-recent --name Yogesh
+    cd unseen && server/.venv/bin/python database/seeds/seed_user.py --username yogesh --name Yogesh
+    cd unseen && server/.venv/bin/python database/seeds/seed_user.py --all-recent --name Yogesh          # anonymous installs
     cd unseen && server/.venv/bin/python database/seeds/seed_user.py --install <uuid> --name Yogesh --replace
 
-Which install?  The app has no accounts: identity is the random install id the
-phone generates (Settings shows its first 8 characters). --all-recent fills every
-real (non-synthetic) install seen in the last 30 days; --install targets one.
-Existing history is kept unless --replace is given (the profile is always
-upserted so the name shows).
+With --username the history belongs to that ACCOUNT (users table, 0003): the
+user is created if missing (password from --password or SEED_USER_PASSWORD in
+the environment / unseen/.env), the history is written once under the account,
+earlier anonymous copies on the targeted installs are removed, and those
+installs are linked to the account. Signing in as that user on any phone then
+pulls this one history. Without --username the rows stay anonymous, keyed by
+install id (--all-recent: every real install seen in the last 30 days;
+--install: one). Existing history is kept unless --replace is given (the
+profile is always upserted so the name shows).
 
 What it writes (database/migrations/0002_user_data.sql):
   user_profiles   first name, onboarded eight weeks ago, BSB, AI discernment
@@ -31,6 +36,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import random
 import sys
 import uuid
@@ -40,9 +46,10 @@ from pathlib import Path
 import asyncpg
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from _env import SERVER_DIR, add_server_to_path, database_url, masked  # noqa: E402
+from _env import SERVER_DIR, UNSEEN_DIR, add_server_to_path, database_url, masked, read_dotenv  # noqa: E402
 
 add_server_to_path()
+from app.services import auth as auths  # noqa: E402
 from app.services import db as dbs  # noqa: E402
 from app.services.usfm import parse  # noqa: E402
 
@@ -239,16 +246,71 @@ async def targets(c: asyncpg.Connection, args: argparse.Namespace) -> list[uuid.
     return [r["install_id"] for r in rows]
 
 
+async def seed_account(args: argparse.Namespace) -> int:
+    """One history owned by an account; targeted installs are linked to it."""
+    username = auths.normalize_username(args.username)
+    url = database_url()
+    print(f"seed_user: {masked(url)}  account @{username}")
+    conn = await asyncpg.connect(url)
+    try:
+        user = await conn.fetchrow("SELECT id, username FROM users WHERE username = $1", username)
+        if user is None:
+            password = args.password or os.environ.get("SEED_USER_PASSWORD") or read_dotenv(UNSEEN_DIR / ".env").get("SEED_USER_PASSWORD")
+            if not password:
+                print("  the account does not exist yet: pass --password or set SEED_USER_PASSWORD")
+                return 1
+            auths.check_password(password)
+            user = await conn.fetchrow(
+                "INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id, username",
+                username, auths.hash_password(password))
+            print(f"  created user @{username}")
+        uid = user["id"]
+        ids = await targets(conn, args) if (args.install or args.all_recent) else []
+        g = Gen(int.from_bytes(username.encode()[:8].ljust(8, b"\0"), "big") % (2**31))
+        async with conn.transaction():
+            existing = await conn.fetchval(
+                "SELECT count(*) FROM user_battles WHERE account_id = $1 AND deleted_at IS NULL", uid)
+            for iid in ids:
+                await conn.execute("INSERT INTO installs (install_id) VALUES ($1) ON CONFLICT (install_id) DO NOTHING", iid)
+                await conn.execute("UPDATE installs SET user_id = $1 WHERE install_id = $2", uid, iid)
+                # Earlier anonymous copies on these installs would duplicate the account history.
+                for table in ("user_battles", "user_stones", "user_allies", "user_armory", "user_watch", "user_profiles"):
+                    await conn.execute(f"DELETE FROM {table} WHERE install_id = $1 AND account_id IS NULL", iid)
+            writer = ids[0] if ids else uuid.uuid4()
+            await conn.execute("INSERT INTO installs (install_id) VALUES ($1) ON CONFLICT (install_id) DO NOTHING", writer)
+            await dbs.upsert_account_profile(conn, uid, writer, profile(args.name, g))
+            if existing and not args.replace:
+                print(f"  @{username}: profile '{args.name}' upserted; {existing} battles kept (use --replace to reset); "
+                      f"linked {len(ids)} install(s)")
+                return 0
+            for table in ("user_battles", "user_stones", "user_allies", "user_armory", "user_watch"):
+                await conn.execute(f"DELETE FROM {table} WHERE account_id = $1", uid)
+            battles, stones, allies, armory = history(g)
+            n = {"battles": await dbs.upsert_account_rows(conn, uid, writer, "battles", battles),
+                 "stones": await dbs.upsert_account_rows(conn, uid, writer, "stones", stones),
+                 "allies": await dbs.upsert_account_rows(conn, uid, writer, "allies", allies),
+                 "armory": await dbs.upsert_account_rows(conn, uid, writer, "armory", armory)}
+            print(f"  @{username}: profile '{args.name}' + " + ", ".join(f"{v} {k}" for k, v in n.items())
+                  + f"; linked {len(ids)} install(s)")
+        return 0
+    finally:
+        await conn.close()
+
+
 async def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--install", action="append", help="install id (uuid); repeatable")
     ap.add_argument("--all-recent", action="store_true", help="every real install seen in the last --days days")
     ap.add_argument("--days", type=int, default=30)
     ap.add_argument("--name", default="Yogesh")
-    ap.add_argument("--replace", action="store_true", help="drop the install's existing history first")
+    ap.add_argument("--username", help="own the history by this account (created if missing)")
+    ap.add_argument("--password", help="password for a NEW account (else SEED_USER_PASSWORD from env / .env)")
+    ap.add_argument("--replace", action="store_true", help="drop the existing history first")
     args = ap.parse_args()
+    if args.username:
+        return await seed_account(args)
     if not args.install and not args.all_recent:
-        ap.error("give --install <uuid> or --all-recent")
+        ap.error("give --username <name>, --install <uuid> or --all-recent")
 
     url = database_url()
     print(f"seed_user: {masked(url)}")

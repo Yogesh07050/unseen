@@ -8,6 +8,7 @@
 import { db } from './db';
 import { openSafe, seal, type Sealed } from './crypto';
 import { api, type SyncPushBody, type SyncRow } from '../ai/api';
+import { getToken } from './auth';
 import type { Settings } from '../types';
 
 export type Collection = 'battles' | 'stones' | 'allies' | 'armory' | 'watch';
@@ -43,7 +44,7 @@ export function scheduleFlush(delay = FLUSH_DELAY_MS): void {
 // Push the outbox. Later entries for the same row win; the outbox survives
 // failures and is retried on the next flush (boot, 'online', next write).
 export async function flush(): Promise<void> {
-  if (flushing || !navigator.onLine) return;
+  if (flushing || !navigator.onLine || !getToken()) return;
   flushing = true;
   try {
     const rows = (await db.table('outbox').orderBy('seq').limit(PUSH_BATCH).toArray()) as OutboxRow[];
@@ -85,7 +86,7 @@ export interface PullResult { changed: number; profile: Settings | null; availab
 // Merge server changes since the last pull into the sealed store. Rows with a
 // pending local change are left alone (the local change is newer and will push).
 export async function pull(): Promise<PullResult> {
-  if (!navigator.onLine) return { changed: 0, profile: null, available: false };
+  if (!navigator.onLine || !getToken()) return { changed: 0, profile: null, available: false };
   const since = Number(localStorage.getItem(SINCE_KEY) ?? 0) || 0;
   const res = await api.syncPull(since);
   if (!res.available) return { changed: 0, profile: null, available: false };

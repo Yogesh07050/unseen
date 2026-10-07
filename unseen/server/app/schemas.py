@@ -224,3 +224,21 @@ class SyncPullOut(BaseModel):
     allies: list[dict] = Field(default_factory=list)
     armory: list[dict] = Field(default_factory=list)
     watch: list[dict] = Field(default_factory=list)
+
+
+# ---- accounts (routers/auth.py) ----
+class CredentialsIn(BaseModel):
+    username: str = Field(min_length=1, max_length=64)
+    password: str = Field(min_length=1, max_length=256)
+
+
+class UserOut(BaseModel):
+    id: str
+    username: str
+
+
+class AuthOut(BaseModel):
+    token: str
+    user: UserOut
+    expiresAt: int
+    claimed: dict[str, int] = Field(default_factory=dict)  # anonymous rows attached to the account on sign-in

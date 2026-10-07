@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { NavBar } from './components/NavBar';
 import { applyStatusBar, hideSplash, initNativeShell, minimizeApp } from './native';
-import { useSettings, useUi } from './store';
+import { useAuth, useSettings, useUi } from './store';
 import { invalidateCaches, purgeLegacyDemoRows, retentionSweep, saveSettings } from './data/repos';
 import { flush, pull } from './data/sync';
 import { recompute } from './battle/useBattle';
@@ -10,6 +10,7 @@ import { fragmentOk } from './engines/verify';
 import { getPassage } from './engines/verses';
 import { FIXED_FRAGMENTS, FIXED_OK } from './content/truthIndex';
 
+import { AuthScreen } from './screens/Auth';
 import { Onboarding } from './screens/Onboarding';
 import { Home } from './screens/Home';
 import { CryOut } from './screens/CryOut';
@@ -34,6 +35,7 @@ const NAV_PATHS = ['/', '/stones', '/schemes', '/armory', '/allies', '/watch'];
 export function App() {
   const location = useLocation();
   const { settings, loaded, load } = useSettings();
+  const auth = useAuth();
   const { toast, hidden, setHidden, setOnline } = useUi();
   const [booted, setBooted] = useState(false);
   const navigate = useNavigate();
@@ -45,16 +47,19 @@ export function App() {
       if (await purgeLegacyDemoRows()) await recompute();
       // Validate fixed Scripture fragments against the API; hide any that fail (done lazily in screens).
       void verifyFixedFragments();
-      // Bring this install's server copy in (a reinstall or second device sees its data),
-      // then push anything still waiting in the outbox.
-      await syncOnBoot();
+      // Check the stored session once; a signed-in account then pulls its history
+      // (a reinstall or second device sees its data) and pushes the outbox.
+      await useAuth.getState().load();
+      if (useAuth.getState().user) await syncOnBoot();
       setBooted(true);
     })();
     const on = () => { setOnline(true); void flush(); void pull().then((r) => { if (r.changed) void recompute(); }); };
     const off = () => setOnline(false);
+    const signedOut = () => useAuth.setState({ user: null });
     window.addEventListener('online', on);
     window.addEventListener('offline', off);
-    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
+    window.addEventListener('unseen:signed-out', signedOut);
+    return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); window.removeEventListener('unseen:signed-out', signedOut); };
   }, []);
 
   // Apply the chosen theme to <html>: 'system' leaves it to prefers-color-scheme.
@@ -94,8 +99,14 @@ export function App() {
     );
   }
 
-  if (!booted || !loaded) {
+  if (!booted || !loaded || !auth.ready) {
     return <div className="app"><div className="screen center"><span className="wordmark">UNSEEN</span></div></div>;
+  }
+
+  // Sign in first: the account is checked against the users table once, then the
+  // session carries the person until they sign out or it expires.
+  if (!auth.user) {
+    return <div className="app"><AuthScreen /></div>;
   }
 
   const onboarded = !!settings?.onboardedAt;
