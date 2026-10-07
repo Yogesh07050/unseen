@@ -1,6 +1,12 @@
-/* UNSEEN design tokens — premium light (warm white + antique gold).
-   Cinematic screens (battle, cry-out, discern, peace) opt back into the
-   dark "unseen realm" palette via the .cinematic scope at the bottom. */
+/* UNSEEN design tokens — "Prime" theme: playful Amazon-Prime blue on white,
+   with a full dark mode.
+
+   NOTE: the accent variables are still named --gold* for backward
+   compatibility with the many components that reference them — but they now
+   hold Amazon-Prime blue, not gold. Light is the default; dark activates from
+   the system preference OR an explicit [data-theme="dark"] on <html>.
+   Cinematic battle screens still opt into their own dramatic palette via the
+   .cinematic scope at the bottom. */
 @font-face { font-family: 'Alegreya'; src: url('/fonts/alegreya-latin-400-normal.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Alegreya'; src: url('/fonts/alegreya-latin-500-italic.woff2') format('woff2'); font-weight: 500; font-style: italic; font-display: swap; }
 @font-face { font-family: 'Alegreya'; src: url('/fonts/alegreya-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
@@ -9,39 +15,41 @@
 @font-face { font-family: 'Alegreya Sans'; src: url('/fonts/alegreya-sans-latin-500-normal.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Alegreya Sans'; src: url('/fonts/alegreya-sans-latin-700-normal.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
 
+/* ───────────────────────── LIGHT (default) ───────────────────────── */
 :root {
   /* Surfaces & background (names kept for compatibility: --night-* = page bg) */
-  --night-1: #FDFBF6;  --night-2: #F3EEE1;
-  --surface: #FFFFFF;  --surface-2: #FAF7F0;  --surface-sunk: #F6F2E9;
+  --night-1: #FFFFFF;  --night-2: #E7F4FC;
+  --surface: #FFFFFF;  --surface-2: #F1F9FE;  --surface-sunk: #E2F1FB;
 
   /* Ink */
-  --text: #26211A;  --muted: #726A5B;  --faint: #A79E8C;
+  --text: #0E1E2E;  --muted: #51657B;  --faint: #8BA3B9;
 
   /* Hairlines */
-  --line: rgba(42,34,20,0.09);  --line-strong: rgba(42,34,20,0.15);
+  --line: rgba(13,45,78,0.10);  --line-strong: rgba(13,45,78,0.17);
 
-  /* Antique gold — the signature accent */
-  --gold: #B8912E;  --gold-hi: #9A7A1E;  --gold-deep: #7A5E16;
-  --gold-soft: rgba(184,145,46,0.10);  --gold-line: rgba(184,145,46,0.34);
-  --illumination: #A2690F;
+  /* Amazon-Prime blue — the signature accent (held in the --gold* names) */
+  --gold: #00A8E1;  --gold-hi: #0B72B5;  --gold-deep: #075488;
+  --gold-soft: rgba(0,168,225,0.12);  --gold-line: rgba(0,168,225,0.40);
+  --illumination: #0088D1;
 
-  /* Supporting hues (muted for light) */
-  --spirit: #4E8BC6;  --spirit-2: #6BA3D8;
-  --ember: #C6502A;  --rose: #B06E88;
+  /* Supporting hues */
+  --spirit: #00A8E1;  --spirit-2: #46C7F0;
+  --ember: #F0533B;  --rose: #8E7BE6;
 
-  /* Scripture vellum (parchment — identical in both themes) */
-  --vellum: #F7EFD8;  --vellum-2: #ECDDB4;  --ink: #2C2014;  --ink-muted: #6E5B42;
+  /* Scripture card ("vellum" — now a soft blue card) */
+  --vellum: #EAF6FD;  --vellum-2: #CFE8F8;  --ink: #0E2435;  --ink-muted: #456079;
 
-  /* Safe Harbor (already a light refuge) */
-  --harbor-bg-1: #FBF4E8;  --harbor-bg-2: #F1DEC2;  --harbor-ink: #2A2346;
+  /* Safe Harbor (calm blue refuge) */
+  --harbor-bg-1: #EAF6FD;  --harbor-bg-2: #CBE7F8;  --harbor-ink: #0E2B45;
+  --harbor-muted: #5A7793;
 
-  /* Elevation */
-  --shadow-sm: 0 1px 2px rgba(42,34,20,.05), 0 4px 12px rgba(42,34,20,.05);
-  --shadow-md: 0 2px 6px rgba(42,34,20,.05), 0 14px 34px rgba(42,34,20,.08);
-  --shadow-gold: 0 10px 26px rgba(184,145,46,.26);
+  /* Elevation (blue-tinted) */
+  --shadow-sm: 0 1px 2px rgba(10,40,70,.06), 0 4px 12px rgba(10,40,70,.06);
+  --shadow-md: 0 2px 6px rgba(10,40,70,.06), 0 14px 34px rgba(10,40,70,.10);
+  --shadow-gold: 0 10px 26px rgba(0,168,225,.32);
 
-  /* Radii & spacing */
-  --r-panel: 20px;  --r-pill: 27px;  --r-chip: 16px;  --r-vellum: 6px;  --r-card: 22px;
+  /* Radii & spacing — playful / rounder */
+  --r-panel: 24px;  --r-pill: 28px;  --r-chip: 18px;  --r-vellum: 16px;  --r-card: 26px;
   --pad-screen: 22px;
 
   /* Type */
@@ -51,23 +59,80 @@
   color-scheme: light;
 }
 
-/* ── Cinematic "unseen realm" — dark palette for the battle flow ──────────── */
+/* ───────────────────────── DARK ─────────────────────────
+   Amazon "squid-ink" navy. Defined once for the system preference
+   (unless the user forced light) and once for an explicit toggle. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --night-1: #16293C;  --night-2: #0B1623;
+    --surface: #1C3047;  --surface-2: #17283B;  --surface-sunk: rgba(0,0,0,0.24);
+
+    --text: #E8F3FC;  --muted: #A3B8CD;  --faint: #6E879F;
+    --line: rgba(190,220,245,0.14);  --line-strong: rgba(190,220,245,0.24);
+
+    --gold: #22B6EC;  --gold-hi: #5CCCF5;  --gold-deep: #9BE0FF;
+    --gold-soft: rgba(34,182,236,0.16);  --gold-line: rgba(34,182,236,0.44);
+    --illumination: #5CCCF5;
+
+    --spirit: #46C7F0;  --spirit-2: #7FD8F7;
+    --ember: #FF6F57;  --rose: #A79BF0;
+
+    --vellum: #12304A;  --vellum-2: #0D2439;  --ink: #DCEFFB;  --ink-muted: #9CB6CC;
+
+    --harbor-bg-1: #122A40;  --harbor-bg-2: #0B1E30;  --harbor-ink: #E8F3FC;
+    --harbor-muted: #93AEC6;
+
+    --shadow-sm: 0 6px 16px rgba(0,0,0,.42);
+    --shadow-md: 0 12px 30px rgba(0,0,0,.52);
+    --shadow-gold: 0 10px 26px rgba(34,182,236,.34);
+
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --night-1: #16293C;  --night-2: #0B1623;
+  --surface: #1C3047;  --surface-2: #17283B;  --surface-sunk: rgba(0,0,0,0.24);
+
+  --text: #E8F3FC;  --muted: #A3B8CD;  --faint: #6E879F;
+  --line: rgba(190,220,245,0.14);  --line-strong: rgba(190,220,245,0.24);
+
+  --gold: #22B6EC;  --gold-hi: #5CCCF5;  --gold-deep: #9BE0FF;
+  --gold-soft: rgba(34,182,236,0.16);  --gold-line: rgba(34,182,236,0.44);
+  --illumination: #5CCCF5;
+
+  --spirit: #46C7F0;  --spirit-2: #7FD8F7;
+  --ember: #FF6F57;  --rose: #A79BF0;
+
+  --vellum: #12304A;  --vellum-2: #0D2439;  --ink: #DCEFFB;  --ink-muted: #9CB6CC;
+
+  --harbor-bg-1: #122A40;  --harbor-bg-2: #0B1E30;  --harbor-ink: #E8F3FC;
+  --harbor-muted: #93AEC6;
+
+  --shadow-sm: 0 6px 16px rgba(0,0,0,.42);
+  --shadow-md: 0 12px 30px rgba(0,0,0,.52);
+  --shadow-gold: 0 10px 26px rgba(34,182,236,.34);
+
+  color-scheme: dark;
+}
+
+/* ── Cinematic "unseen realm" — dramatic palette for the battle flow ──────────
+   Kept dark in both themes; accents shifted to the Prime-blue family. */
 .cinematic {
-  --night-1: #17193F;  --night-2: #0C0E29;
-  --surface: rgba(255,255,255,0.055);  --surface-2: rgba(255,255,255,0.03);  --surface-sunk: rgba(0,0,0,0.18);
+  --night-1: #0E2036;  --night-2: #061320;
+  --surface: rgba(255,255,255,0.06);  --surface-2: rgba(255,255,255,0.03);  --surface-sunk: rgba(0,0,0,0.2);
 
-  --text: #EEEAF8;  --muted: #A9ACD2;  --faint: #7E82AB;
-  --line: rgba(237,232,247,0.14);  --line-strong: rgba(237,232,247,0.24);
+  --text: #EAF4FD;  --muted: #A9C2D8;  --faint: #7793AD;
+  --line: rgba(232,243,253,0.14);  --line-strong: rgba(232,243,253,0.24);
 
-  --gold: #F2B544;  --gold-hi: #FFDC8F;  --gold-deep: #B9822C;
-  --gold-soft: rgba(242,181,68,0.12);  --gold-line: rgba(242,181,68,0.42);
+  --gold: #35C4F2;  --gold-hi: #8FE0FF;  --gold-deep: #1E9AC8;
+  --gold-soft: rgba(53,196,242,0.14);  --gold-line: rgba(53,196,242,0.44);
 
-  --spirit: #BFE9FF;  --spirit-2: #7CC8F5;
-  --ember: #E8592F;  --rose: #DDA7B8;
+  --spirit: #BFEBFF;  --spirit-2: #7CC8F5;
+  --ember: #FF6F57;  --rose: #B9A7F0;
 
   --shadow-sm: 0 6px 16px rgba(0,0,0,.34);
   --shadow-md: 0 12px 30px rgba(0,0,0,.4);
-  --shadow-gold: 0 10px 26px rgba(242,181,68,.3);
+  --shadow-gold: 0 10px 26px rgba(53,196,242,.32);
 
   color-scheme: dark;
   background: linear-gradient(180deg, var(--night-1) 0%, var(--night-2) 100%);

@@ -25,7 +25,9 @@ export function Peace() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!ctx) { navigate('/', { replace: true }); return null; }
+  // Redirect from an effect, never during render (React warns on setState-in-render).
+  useEffect(() => { if (!ctx) navigate('/', { replace: true }); }, [ctx, navigate]);
+  if (!ctx) return null;
   const gentle = ctx.gentleReply;
 
   function fillLabel(label: string): string {

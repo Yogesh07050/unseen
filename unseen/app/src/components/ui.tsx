@@ -13,9 +13,9 @@ export function Button({ children, variant = 'gold', onClick, disabled, type = '
   const styles: Record<string, React.CSSProperties> = {
     gold: {
       ...base, height: 54,
-      background: 'linear-gradient(180deg,#CBA33E 0%,#B8912E 55%,#A67E22 100%)',
-      color: '#FFFBF0', fontWeight: 700, fontSize: 18,
-      boxShadow: 'var(--shadow-gold), inset 0 1px 0 rgba(255,255,255,.3)',
+      background: 'linear-gradient(180deg,#2BC2F0 0%,#00A8E1 52%,#0089C4 100%)',
+      color: '#FFFFFF', fontWeight: 700, fontSize: 18,
+      boxShadow: 'var(--shadow-gold), inset 0 1px 0 rgba(255,255,255,.4)',
     },
     ghost: {
       ...base, height: 50, background: 'var(--surface)', color: 'var(--text)',
@@ -59,9 +59,9 @@ export function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) =
 export function Vellum({ verse, battle, children }: { verse?: VerifiedVerse; battle?: boolean; children?: ReactNode }) {
   return (
     <div className="vellum" style={{
-      background: 'linear-gradient(168deg,var(--vellum) 0%,#F0E2BE 60%,var(--vellum-2) 100%)',
+      background: 'linear-gradient(168deg,var(--vellum) 0%,var(--vellum-2) 100%)',
       color: 'var(--ink)', borderRadius: 'var(--r-vellum)', padding: '18px 20px 15px',
-      boxShadow: 'inset 0 0 0 1px rgba(122,90,40,.22), inset 0 0 26px rgba(160,120,50,.14), 0 10px 26px rgba(120,90,40,.16)',
+      boxShadow: 'inset 0 0 0 1px var(--gold-line), inset 0 0 26px var(--gold-soft), var(--shadow-sm)',
       font: `400 ${battle ? '20px/30px' : '18.5px/27px'} var(--serif)`,
     }}>
       {verse ? (

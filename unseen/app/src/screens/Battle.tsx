@@ -316,22 +316,20 @@ export function Battle() {
         <span className="tiny" style={{ color: 'var(--faint)', letterSpacing: '.4px' }}>{verse.reference}</span>
       </div>
 
-      {/* ── Battle scene (normal, bounded, portrait) ───────── */}
-      <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <div style={{ height: '100%', maxHeight: 420, aspectRatio: '390 / 440', maxWidth: '100%', position: 'relative' }}>
-          <Scene
-            archetype={ctx.archetype ?? 'shadow'}
-            lie={ctx.discernment?.lie ?? ''}
-            phraseIndex={ctx.phraseIndex}
-            totalPhrases={total}
-            state={state === 'climax' ? 'climax' : 'fighting'}
-            allyAcks={ctx.allyAcks}
-            symbolic={settings?.battleStyle === 'symbolic'}
-            reduceMotion={settings?.reduceMotion}
-            onIntroChange={setIntroPlaying}
-            fill
-          />
-        </div>
+      {/* ── Battle scene — fills the available space so there is no empty surround ───────── */}
+      <div style={{ flex: '1 1 auto', minHeight: 0, position: 'relative' }}>
+        <Scene
+          archetype={ctx.archetype ?? 'shadow'}
+          lie={ctx.discernment?.lie ?? ''}
+          phraseIndex={ctx.phraseIndex}
+          totalPhrases={total}
+          state={state === 'climax' ? 'climax' : 'fighting'}
+          allyAcks={ctx.allyAcks}
+          symbolic={settings?.battleStyle === 'symbolic'}
+          reduceMotion={settings?.reduceMotion}
+          onIntroChange={setIntroPlaying}
+          fill
+        />
       </div>
 
       {/* ── Ally acknowledgement ───────────────────────────── */}
@@ -350,7 +348,7 @@ export function Battle() {
             onClick={() => { if (i === ctx.phraseIndex && state === 'fighting') tapStrike(); }}
             style={{
               borderBottom: i < ctx.phraseIndex ? '2px solid var(--illumination)' : 'none',
-              background: i === ctx.phraseIndex && state === 'fighting' ? 'rgba(162,105,15,.18)' : 'transparent',
+              background: i === ctx.phraseIndex && state === 'fighting' ? 'rgba(0,168,225,.20)' : 'transparent',
               cursor: i === ctx.phraseIndex && state === 'fighting' ? 'pointer' : 'default',
               borderRadius: 2,
             }}

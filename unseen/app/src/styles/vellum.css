@@ -1,9 +1,9 @@
 .vellum {
-  background: linear-gradient(168deg, var(--vellum) 0%, #EEDDB3 60%, var(--vellum-2) 100%);
+  background: linear-gradient(168deg, var(--vellum) 0%, var(--vellum-2) 100%);
   color: var(--ink);
   border-radius: var(--r-vellum);
   padding: 16px 18px 13px;
-  box-shadow: inset 0 0 0 1px rgba(122,90,40,.28), inset 0 0 22px rgba(160,120,50,.18), 0 12px 28px rgba(0,0,0,.38);
+  box-shadow: inset 0 0 0 1px var(--gold-line), inset 0 0 22px var(--gold-soft), var(--shadow-md);
   font: 400 18.5px/27px var(--serif);
 }
 .vellum .dropcap { float: left; font: 800 50px/41px var(--serif); color: var(--illumination); margin: 2px 8px 0 0; }

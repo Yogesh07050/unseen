@@ -55,7 +55,7 @@ export function Harbor() {
               {pastorBtn}
               {counsellorBtn}
             </div>
-            <p className="tiny" style={{ color: '#5a4b7a', textAlign: 'center', marginTop: 4 }}>If it ever feels like more than you can carry</p>
+            <p className="tiny" style={{ color: 'var(--harbor-muted)', textAlign: 'center', marginTop: 4 }}>If it ever feels like more than you can carry</p>
             <div className="stack">
               {crisisLine}
               {emergencyBtn}
@@ -71,7 +71,7 @@ export function Harbor() {
           </div>
         )}
 
-        <p style={{ fontStyle: 'italic', color: '#5a4b7a', textAlign: 'center', marginTop: 8 }}>
+        <p style={{ fontStyle: 'italic', color: 'var(--harbor-muted)', textAlign: 'center', marginTop: 8 }}>
           “The LORD is near to the brokenhearted; He saves the contrite in spirit.” <span style={{ display: 'block', fontStyle: 'normal', fontSize: 13 }}>Psalm 34:18</span>
         </p>
 
@@ -88,17 +88,17 @@ export function Harbor() {
 function HarborBtn({ label, sub, href, external, danger, quiet }: { label: string; sub?: string; href?: string; external?: boolean; danger?: boolean; quiet?: boolean }) {
   return (
     <a href={href} target={external ? '_blank' : undefined} rel="noreferrer" style={{
-      display: 'block', textDecoration: 'none', borderRadius: 14, padding: '14px 16px',
-      background: quiet ? 'transparent' : danger ? '#F4D7CF' : '#FFFFFF',
-      border: `1px solid ${danger ? '#D98C7A' : 'rgba(42,35,70,.15)'}`, color: 'var(--harbor-ink)', textAlign: 'center',
+      display: 'block', textDecoration: 'none', borderRadius: 16, padding: '14px 16px',
+      background: quiet ? 'transparent' : danger ? '#F4D7CF' : 'var(--surface)',
+      border: `1px solid ${danger ? '#D98C7A' : 'var(--line-strong)'}`, color: danger ? '#7A2A1A' : 'var(--harbor-ink)', textAlign: 'center',
     }}>
       <div style={{ fontWeight: 700 }}>{label}</div>
-      {sub && <div style={{ fontSize: 13, color: '#5a4b7a' }}>{sub}</div>}
+      {sub && <div style={{ fontSize: 13, color: 'var(--harbor-muted)' }}>{sub}</div>}
     </a>
   );
 }
 function btn(kind: 'solid' | 'text'): React.CSSProperties {
   return kind === 'solid'
-    ? { height: 54, borderRadius: 27, border: 0, background: '#2A2346', color: '#FBF4E8', fontWeight: 700, fontSize: 18, width: '100%' }
-    : { height: 40, border: 0, background: 'transparent', color: '#5a4b7a', fontSize: 16, width: '100%' };
+    ? { height: 54, borderRadius: 28, border: 0, background: 'linear-gradient(180deg,#2BC2F0 0%,#00A8E1 52%,#0089C4 100%)', color: '#FFFFFF', fontWeight: 700, fontSize: 18, width: '100%', boxShadow: '0 10px 26px rgba(0,168,225,.32)' }
+    : { height: 40, border: 0, background: 'transparent', color: 'var(--harbor-muted)', fontSize: 16, width: '100%' };
 }

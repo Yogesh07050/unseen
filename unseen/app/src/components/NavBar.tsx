@@ -13,9 +13,9 @@ export function NavBar() {
     <nav style={{
       position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 460,
       height: 'calc(88px + env(safe-area-inset-bottom, 0px))',
-      background: 'rgba(253,251,246,.93)',
+      background: 'color-mix(in srgb, var(--surface) 88%, transparent)',
       borderTop: '1px solid var(--line)',
-      boxShadow: '0 -10px 28px rgba(42,34,20,.07)',
+      boxShadow: '0 -10px 28px rgba(10,40,70,.10)',
       display: 'flex', alignItems: 'flex-start', paddingTop: 11,
       paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       backdropFilter: 'saturate(1.4) blur(14px)', WebkitBackdropFilter: 'saturate(1.4) blur(14px)', zIndex: 20,

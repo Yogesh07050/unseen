@@ -20,43 +20,43 @@ export function Orb({ size = 250, listening = false, level = 0, onTap, label = '
       {/* Outer atmospheric breath — slow pulse */}
       <span aria-hidden className="orb-glow-outer" style={{
         position: 'absolute', width: size * 1.18, height: size * 1.18, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(212,175,86,.18) 0%, rgba(212,175,86,.05) 54%, transparent 74%)',
+        background: 'radial-gradient(circle, rgba(0,168,225,.22) 0%, rgba(0,168,225,.06) 54%, transparent 74%)',
         filter: 'blur(10px)',
       }} />
 
-      {/* Inner warm halo */}
+      {/* Inner bright halo */}
       <span aria-hidden style={{
         position: 'absolute', width: size, height: size, borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(212,175,86,.42) 0%, rgba(212,175,86,.12) 46%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(0,168,225,.42) 0%, rgba(0,168,225,.12) 46%, transparent 70%)',
         filter: 'blur(3px)',
       }} />
 
       {/* Decorative concentric rings (Home hero) */}
       {rings && (
         <>
-          <span aria-hidden style={{ position: 'absolute', width: size * 0.99, height: size * 0.99, borderRadius: '50%', border: '1px solid rgba(184,145,46,.28)', opacity: .7 }} />
-          <span aria-hidden style={{ position: 'absolute', width: core * 1.32, height: core * 1.32, borderRadius: '50%', border: '1px solid rgba(184,145,46,.42)' }} />
-          <span aria-hidden style={{ position: 'absolute', width: core * 1.08, height: core * 1.08, borderRadius: '50%', border: '1px solid rgba(184,145,46,.22)', opacity: .6 }} />
+          <span aria-hidden style={{ position: 'absolute', width: size * 0.99, height: size * 0.99, borderRadius: '50%', border: '1px solid rgba(0,168,225,.30)', opacity: .7 }} />
+          <span aria-hidden style={{ position: 'absolute', width: core * 1.32, height: core * 1.32, borderRadius: '50%', border: '1px solid rgba(0,168,225,.46)' }} />
+          <span aria-hidden style={{ position: 'absolute', width: core * 1.08, height: core * 1.08, borderRadius: '50%', border: '1px solid rgba(0,168,225,.26)', opacity: .6 }} />
           {/* Light motes */}
-          <span aria-hidden className="orb-mote-1" style={{ position: 'absolute', width: 5, height: 5, borderRadius: '50%', background: 'rgba(220,185,90,.85)', top: size * 0.13, left: size * 0.18 }} />
-          <span aria-hidden className="orb-mote-2" style={{ position: 'absolute', width: 4, height: 4, borderRadius: '50%', background: 'rgba(220,185,90,.65)', top: size * 0.17, right: size * 0.14 }} />
-          <span aria-hidden className="orb-mote-3" style={{ position: 'absolute', width: 3, height: 3, borderRadius: '50%', background: 'rgba(220,185,90,.55)', bottom: size * 0.21, left: size * 0.22 }} />
+          <span aria-hidden className="orb-mote-1" style={{ position: 'absolute', width: 5, height: 5, borderRadius: '50%', background: 'rgba(120,220,255,.9)', top: size * 0.13, left: size * 0.18 }} />
+          <span aria-hidden className="orb-mote-2" style={{ position: 'absolute', width: 4, height: 4, borderRadius: '50%', background: 'rgba(120,220,255,.7)', top: size * 0.17, right: size * 0.14 }} />
+          <span aria-hidden className="orb-mote-3" style={{ position: 'absolute', width: 3, height: 3, borderRadius: '50%', background: 'rgba(120,220,255,.6)', bottom: size * 0.21, left: size * 0.22 }} />
         </>
       )}
 
       {/* Pulsing listen rings */}
       {listening && (
         <>
-          <span aria-hidden style={{ position: 'absolute', width: core * 1.22, height: core * 1.22, borderRadius: '50%', border: '1.5px solid rgba(201,166,70,.5)', transform: `scale(${ringScale})`, transition: 'transform .12s ease-out' }} />
-          <span aria-hidden style={{ position: 'absolute', width: core * 1.5, height: core * 1.5, borderRadius: '50%', border: '1px solid rgba(201,166,70,.25)', transform: `scale(${ringScale})`, transition: 'transform .16s ease-out' }} />
+          <span aria-hidden style={{ position: 'absolute', width: core * 1.22, height: core * 1.22, borderRadius: '50%', border: '1.5px solid rgba(0,168,225,.55)', transform: `scale(${ringScale})`, transition: 'transform .12s ease-out' }} />
+          <span aria-hidden style={{ position: 'absolute', width: core * 1.5, height: core * 1.5, borderRadius: '50%', border: '1px solid rgba(0,168,225,.28)', transform: `scale(${ringScale})`, transition: 'transform .16s ease-out' }} />
         </>
       )}
 
       {/* The luminous sphere */}
       <span aria-hidden className={listening ? 'orb-core' : 'orb-core orb-float'} style={{
         position: 'relative', width: core, height: core, borderRadius: '50%',
-        background: 'radial-gradient(circle at 36% 30%, #FFFFFF 0%, #FFFBF0 28%, #FFF3D0 52%, #F1E0B2 74%, #E0C880 100%)',
-        boxShadow: '0 16px 46px rgba(184,145,46,.38), 0 4px 14px rgba(184,145,46,.22), inset 0 2px 14px rgba(255,255,255,.95), inset 0 -12px 28px rgba(184,145,46,.28)',
+        background: 'radial-gradient(circle at 36% 30%, #FFFFFF 0%, #EAFaFF 26%, #BFEBFF 52%, #6FD0F5 76%, #22B2E6 100%)',
+        boxShadow: '0 16px 46px rgba(0,168,225,.42), 0 4px 14px rgba(0,168,225,.26), inset 0 2px 14px rgba(255,255,255,.95), inset 0 -12px 28px rgba(0,140,205,.32)',
         display: 'grid', placeItems: 'center',
       }}>
         {/* Primary specular highlight */}
@@ -65,12 +65,12 @@ export function Orb({ size = 250, listening = false, level = 0, onTap, label = '
         <span aria-hidden style={{ position: 'absolute', top: core * 0.55, right: core * 0.12, width: core * 0.18, height: core * 0.14, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,.45), rgba(255,255,255,0))', filter: 'blur(4px)' }} />
 
         {/* Descending dove */}
-        <svg width={dove} height={dove} viewBox="0 0 200 180" aria-hidden style={{ position: 'relative', filter: 'drop-shadow(0 1px 4px rgba(122,94,22,.45)) drop-shadow(0 0 8px rgba(255,240,180,.6))' }}>
+        <svg width={dove} height={dove} viewBox="0 0 200 180" aria-hidden style={{ position: 'relative', filter: 'drop-shadow(0 1px 4px rgba(14,80,120,.45)) drop-shadow(0 0 8px rgba(190,235,255,.7))' }}>
           <defs>
             <linearGradient id="doveg" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0" stopColor="#FFFFFF" />
-              <stop offset="0.6" stopColor="#FFF5DC" />
-              <stop offset="1" stopColor="#DFC880" />
+              <stop offset="0.6" stopColor="#EAF8FF" />
+              <stop offset="1" stopColor="#8FD8F5" />
             </linearGradient>
           </defs>
           <g fill="url(#doveg)">
@@ -80,7 +80,7 @@ export function Orb({ size = 250, listening = false, level = 0, onTap, label = '
             <ellipse cx="100" cy="116" rx="13" ry="24" />
             <circle cx="100" cy="143" r="9.5" />
           </g>
-          <path d="M96,151 L100,160 L104,151 Z" fill="#C79A3A" />
+          <path d="M96,151 L100,160 L104,151 Z" fill="#1E9AC8" />
         </svg>
       </span>
 

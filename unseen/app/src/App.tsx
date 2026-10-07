@@ -50,6 +50,14 @@ export function App() {
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
   }, []);
 
+  // Apply the chosen theme to <html>: 'system' leaves it to prefers-color-scheme.
+  useEffect(() => {
+    const root = document.documentElement;
+    const theme = settings?.theme ?? 'system';
+    if (theme === 'system') root.removeAttribute('data-theme');
+    else root.setAttribute('data-theme', theme);
+  }, [settings?.theme]);
+
   // Ally page is public and needs no app shell, settings or lock.
   if (location.pathname.startsWith('/p/')) {
     return (

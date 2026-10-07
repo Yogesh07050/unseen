@@ -17,7 +17,7 @@ function RowCells({ wd, row }: { wd: number; row: number[] }) {
     <>
       <span className="tiny" style={{ fontSize: 11 }}>{WEEKDAYS[wd]}</span>
       {row.map((v, i) => (
-        <span key={i} style={{ height: 22, borderRadius: 6, background: `rgba(184,145,46,${0.07 + 0.8 * v})`, border: '1px solid var(--line)' }} />
+        <span key={i} style={{ height: 22, borderRadius: 6, background: `rgba(0,168,225,${0.07 + 0.8 * v})`, border: '1px solid var(--line)' }} />
       ))}
     </>
   );
@@ -43,7 +43,7 @@ export function WatchTimeline({ windows, todayWeekday }: { windows: WatchWindow[
             <div style={{ position: 'relative', flex: 1, height: 16, background: 'var(--surface-sunk)', borderRadius: 8, border: '1px solid var(--line)', outline: wd === todayWeekday ? '1px solid var(--gold-line)' : 'none' }}>
               {wins.map((w) => {
                 const l = toPct(w.startHour); const r = toPct(w.endHour);
-                return <span key={w.id} title={w.reason} style={{ position: 'absolute', left: `${l * 100}%`, width: `${Math.max(6, (r - l) * 100)}%`, top: 0, bottom: 0, borderRadius: 8, background: w.level === 'high' ? 'var(--gold)' : 'rgba(184,145,46,.5)' }} />;
+                return <span key={w.id} title={w.reason} style={{ position: 'absolute', left: `${l * 100}%`, width: `${Math.max(6, (r - l) * 100)}%`, top: 0, bottom: 0, borderRadius: 8, background: w.level === 'high' ? 'var(--gold)' : 'var(--gold-line)' }} />;
               })}
             </div>
           </div>

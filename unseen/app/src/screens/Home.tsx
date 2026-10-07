@@ -25,8 +25,12 @@ const ICON = {
 
 export function Home() {
   const navigate = useNavigate();
-  const { settings } = useSettings();
+  const { settings, update } = useSettings();
   const { setHidden } = useUi();
+
+  const prefersDark = typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+  const isDark = (settings?.theme ?? 'system') === 'dark' || ((settings?.theme ?? 'system') === 'system' && prefersDark);
+  const toggleTheme = () => update({ theme: isDark ? 'light' : 'dark' });
   const [stones, setStones] = useState<Stone[]>([]);
   const [windows, setWindows] = useState<WatchWindow[]>([]);
   const [verseOfDay, setVerseOfDay] = useState<Awaited<ReturnType<typeof getVerified>>>(null);
@@ -71,6 +75,13 @@ export function Home() {
           <p style={{ margin: '5px 0 0', font: '400 13px/1 var(--sans)', color: 'var(--faint)', letterSpacing: '.3px' }}>{now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
         </div>
         <div className="row" style={{ gap: 4 }}>
+          <button className="icon-btn home-icon-btn" aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'} onClick={toggleTheme}>
+            {isDark ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8"/></svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
+            )}
+          </button>
           <button className="icon-btn home-icon-btn" aria-label="Hide" onClick={() => setHidden(true)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 3l18 18M10.6 10.7a2 2 0 002.8 2.8M9.4 5.1A9 9 0 0121 12a9 9 0 01-1.6 2.6M6.1 6.1A9 9 0 003 12a9 9 0 0010.9 5.3" /></svg>
           </button>
@@ -96,13 +107,13 @@ export function Home() {
       {/* ── Secondary action: type instead ───────────────── */}
       <button onClick={() => navigate('/cry-out?mode=text')} className="type-instead-btn" style={{
         width: '100%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-        height: 56, borderRadius: 20,
-        background: 'linear-gradient(180deg, #FFFEF9 0%, #FAF3E4 100%)',
+        height: 56, borderRadius: 22,
+        background: 'linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%)',
         color: 'var(--gold-hi)',
         border: '1.5px solid var(--gold-line)',
-        boxShadow: '0 1px 3px rgba(42,34,20,.04), 0 8px 22px rgba(42,34,20,.07), inset 0 1px 0 rgba(255,255,255,.9)',
+        boxShadow: '0 1px 3px rgba(10,40,70,.05), 0 8px 22px rgba(10,40,70,.08), inset 0 1px 0 rgba(255,255,255,.35)',
         font: '600 16px var(--sans)', letterSpacing: '.3px',
-        marginBottom: 12, transition: 'transform .12s ease, box-shadow .15s ease',
+        marginBottom: 12, transition: 'transform .14s ease, box-shadow .18s ease',
       }}>
         <span style={{ display: 'inline-flex', opacity: .85 }}>{ICON.write}</span>
         Type it instead
@@ -129,18 +140,18 @@ function Ribbon({ icon, eyebrow, title, sub, onClick }: {
   return (
     <button onClick={onClick} className="rise-in ribbon-card" style={{
       width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 14,
-      background: 'linear-gradient(135deg,#FFFEF9 0%,#FBF4E4 100%)',
+      background: 'linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%)',
       border: '1px solid var(--gold-line)',
-      borderRadius: 18, padding: '14px 16px 14px 14px',
-      boxShadow: '0 1px 3px rgba(42,34,20,.04), 0 8px 22px rgba(42,34,20,.07), inset 0 1px 0 rgba(255,255,255,.8)',
-      color: 'var(--text)', transition: 'transform .12s ease, box-shadow .15s ease',
+      borderRadius: 20, padding: '14px 16px 14px 14px',
+      boxShadow: '0 1px 3px rgba(10,40,70,.05), 0 8px 22px rgba(10,40,70,.08), inset 0 1px 0 rgba(255,255,255,.35)',
+      color: 'var(--text)', transition: 'transform .14s ease, box-shadow .18s ease',
     }}>
       <span style={{
         flexShrink: 0, width: 44, height: 44, borderRadius: 13,
         display: 'grid', placeItems: 'center',
-        background: 'linear-gradient(145deg,rgba(184,145,46,.14),rgba(184,145,46,.08))',
+        background: 'linear-gradient(145deg,rgba(0,168,225,.18),rgba(0,168,225,.08))',
         border: '1px solid var(--gold-line)', color: 'var(--gold-hi)',
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,.6)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,.35)',
       }}>{icon}</span>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span className="eyebrow" style={{ display: 'block', marginBottom: 2 }}>{eyebrow}</span>

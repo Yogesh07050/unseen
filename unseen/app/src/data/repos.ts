@@ -1,5 +1,5 @@
 import { db } from './db';
-import { open, seal, type Sealed } from './crypto';
+import { openSafe, seal, type Sealed } from './crypto';
 import type {
   Ally, ArmoryVerse, Battle, LieCluster, LocalEvent, Settings, Stone, Transcript, WatchWindow,
 } from '../types';
@@ -8,9 +8,21 @@ async function putSealed(table: string, id: string, ts: number, obj: unknown) {
   await db.table(table).put(await seal(id, ts, obj));
 }
 
+// Decrypts every row of a table. A row that cannot be opened (sealed under a
+// lost key, or corrupt) is skipped AND deleted: the key is non-extractable, so
+// such a row is unrecoverable garbage, and one bad row must never take a whole
+// screen down with an unhandled rejection.
 async function allSealed<T>(table: string): Promise<T[]> {
   const rows = (await db.table(table).toArray()) as Sealed[];
-  return Promise.all(rows.map((r) => open<T>(r)));
+  const opened = await Promise.all(rows.map((r) => openSafe<T>(r)));
+  const out: T[] = [];
+  const dead: string[] = [];
+  opened.forEach((v, i) => { if (v === null) dead.push(rows[i].id); else out.push(v); });
+  if (dead.length) {
+    console.warn(`[unseen] ${table}: purged ${dead.length} undecryptable row(s)`);
+    await Promise.all(dead.map((id) => db.table(table).delete(id)));
+  }
+  return out;
 }
 
 // In-memory caches of decrypted rows so the battle hot path and analytics do not
@@ -24,13 +36,14 @@ export function invalidateCaches() { battleCache = null; stoneCache = null; sett
 export const DEFAULT_SETTINGS: Settings = {
   id: 'me', bibleId: 3034, battleStyle: 'cinematic', reduceMotion: false, sound: false,
   retentionDays: 30, lock: 'none', watchAlerts: 'in_app', adultConfirmedAt: 0, onboardedAt: 0,
-  discernMode: 'instant',
+  theme: 'system', discernMode: 'instant',
 };
 
 export async function getSettings(): Promise<Settings | null> {
   if (settingsCache !== undefined) return settingsCache;
   const row = (await db.table('settings').get('me')) as Sealed | undefined;
-  settingsCache = row ? await open<Settings>(row) : null;
+  // Undecryptable settings → treat as a fresh install (re-onboard) rather than crash at boot.
+  settingsCache = row ? await openSafe<Settings>(row) : null;
   return settingsCache;
 }
 export async function saveSettings(s: Settings) {
@@ -55,7 +68,7 @@ export async function allStones(): Promise<Stone[]> {
 }
 export async function getStone(id: string): Promise<Stone | null> {
   const row = (await db.table('stones').get(id)) as Sealed | undefined;
-  return row ? open<Stone>(row) : null;
+  return row ? openSafe<Stone>(row) : null;
 }
 
 // ---- transcripts ----
@@ -104,8 +117,9 @@ export async function clearDemo() {
   for (const table of ['battles', 'stones'] as const) {
     const rows = (await db.table(table).toArray()) as Sealed[];
     for (const r of rows) {
-      const obj = await open<{ demo?: boolean }>(r);
-      if (obj.demo) await db.table(table).delete(r.id);
+      const obj = await openSafe<{ demo?: boolean }>(r);
+      // Undecryptable rows are garbage too — clear them along with the demo data.
+      if (!obj || obj.demo) await db.table(table).delete(r.id);
     }
   }
   await db.table('lieClusters').clear();

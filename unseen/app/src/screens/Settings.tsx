@@ -32,6 +32,13 @@ export function SettingsScreen() {
           </div>
         </SettingRow>
         <SettingRow label="Bible version"><span className="small muted">Berean Standard Bible</span></SettingRow>
+        <SettingRow label="Appearance">
+          <div className="row">
+            {(['light', 'dark', 'system'] as const).map((t) => (
+              <Chip key={t} label={t[0].toUpperCase() + t.slice(1)} selected={(s.theme ?? 'system') === t} onClick={() => update({ theme: t })} />
+            ))}
+          </div>
+        </SettingRow>
         <SettingRow label="Battle style">
           <div className="row">
             <Chip label="Cinematic" selected={s.battleStyle === 'cinematic'} onClick={() => update({ battleStyle: 'cinematic' })} />

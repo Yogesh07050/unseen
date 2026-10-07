@@ -86,6 +86,7 @@ export interface Settings {
   retentionDays: 7 | 30 | null; lock: 'none' | 'webauthn'; credentialId?: string;
   watchAlerts: 'off' | 'in_app' | 'calendar' | 'push'; adultConfirmedAt: number; onboardedAt: number;
   counsellorUrl?: string; crisisCountry?: string;
+  theme?: 'light' | 'dark' | 'system';
   discernMode?: 'gloo' | 'instant';
   armorIntention?: string; armorPeaceStep?: string; armorIdentity?: string; armorAlly?: string; armorPlanArmed?: boolean;
 }

@@ -9,9 +9,9 @@ export function StoneTile({ stone, onClick }: { stone: Stone; onClick?: () => vo
   const [, m, d] = stone.date.split('-');
   return (
     <button onClick={onClick} style={{
-      height: 76, borderRadius: '16px 11px 18px 12px', border: '1px solid var(--line-strong)', textAlign: 'left',
-      background: 'radial-gradient(130% 120% at 32% 22%, #FCF8EF 0%, #F0E8D7 56%, #E5DAC3 100%)',
-      boxShadow: 'var(--shadow-sm), inset 0 1px 1px rgba(255,255,255,.7), inset 0 -4px 10px rgba(160,120,50,.08)',
+      height: 76, borderRadius: '18px 12px 20px 13px', border: '1px solid var(--line-strong)', textAlign: 'left',
+      background: 'radial-gradient(130% 120% at 32% 22%, var(--surface) 0%, var(--surface-2) 56%, var(--surface-sunk) 100%)',
+      boxShadow: 'var(--shadow-sm), inset 0 1px 1px rgba(255,255,255,.35), inset 0 -4px 10px var(--gold-soft)',
       padding: '9px 11px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', color: 'var(--ink)',
     }}>
       <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--gold-deep)' }}>{m}/{d}</span>

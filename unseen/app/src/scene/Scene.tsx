@@ -35,7 +35,9 @@ const ART = {
   // Angel (A)
   aFly:       '/art/a-fly.svg',         // flying in / offering the scroll (scenes 2–3a)
   aWatch:     '/art/a-watch.svg',       // after handing over the scroll (scene 3b, fight)
-  aBye:       '/art/a-bye.svg',         // waving goodbye (finale)
+  aBye:       '/art/a-bye.svg',         // waving goodbye (unused — superseded by the hug)
+  // Finale embrace — boy & angel hug to close the battle
+  hug:        '/art/hug.svg',
   // FX
   punchFx:    '/art/punch-effect.svg',
 };
@@ -125,7 +127,7 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
   // The boxing poses (ready / punch) already face LEFT toward the devil — no flip needed.
 
   // Finale choreography (on the last punch / climax):
-  //   0 defeated devil + angel still present   1 angel flies away
+  //   0 defeated devil + boy & angel present   1 boy & angel embrace (the hug)
   //   2 devil dissolves completely             3 devil gone → Battle navigates on
   const [fp, setFp] = useState(0);
   useEffect(() => {
@@ -133,9 +135,9 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
     if (reduceMotion) { setFp(3); return; }
     setFp(0);
     const timers = [
-      setTimeout(() => setFp(1), 700),  // angel begins flying away
-      setTimeout(() => setFp(2), 3000), // angel gone → devil starts to dissolve
-      setTimeout(() => setFp(3), 4600), // devil fully dissolved
+      setTimeout(() => setFp(1), 350),  // devil snaps out quickly; boy & angel stand victorious
+      setTimeout(() => setFp(2), 1300), // a breath later: darkness breaks and the embrace eases in
+      setTimeout(() => setFp(3), 2200), // settle
     ];
     return () => timers.forEach(clearTimeout);
   }, [isClimax, reduceMotion]);
@@ -176,12 +178,13 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
     flash ? ART.dHit :                   // getting beaten on a strike
     ART.dConfused;                       // rattled between strikes
 
-  const aSrc = finale ? ART.aBye : ART.aWatch; // fight: watching; finale: waving off
+  // Angel pose: it simply watches now; the finale fly-away is replaced by the hug.
 
   // Every character is sized by HEIGHT (not width) so M, D and A stand the same
   // height, and they share one baseline (GROUND) so the composition sits centred.
   const CH = 34;                 // character height, % of the scene
   const GROUND = '30%';          // feet baseline — raised so the cast sits at the visual centre
+  const A_BOTTOM = '38%';        // the angel floats a little above the others
   const D_LEFT = '4%', M_LEFT = '40%', A_LEFT = '61%'; // evenly spaced: devil · boy · angel
 
   // Environment light level: 0 = dark & oppressive, 1 = full hopeful light.
@@ -193,6 +196,15 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
     0;                                                   // fear / control: full dark
   const victoryBreak = isClimax && fp >= 2;              // the instant the darkness shatters
   const grown = isPeace || (isClimax && fp >= 2);        // boy grows once the darkness breaks
+  const hugging = isPeace || (isClimax && fp >= 2);      // boy & angel embrace once the devil is truly gone
+
+  // Background arc: dark/oppressive while the devil whispers (ip < 4); turns to a
+  // sunny grass field the moment the angel arrives and through the whole fight;
+  // then gives way to the victory dawn once the devil is defeated (fp ≥ 2 / peace).
+  const grass = (state === 'fighting' && (!introActive || ip >= 4)) || (isClimax && fp < 2);
+  const grassOn = grass ? 1 : 0;
+  // Dread: the frightening, oppressive world while the devil whispers the lie (ip < 4).
+  const dread = state === 'fighting' && introActive && ip < 4;
 
   return (
     <div ref={rootRef} style={{
@@ -210,13 +222,51 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
         position: 'absolute', inset: 0, pointerEvents: 'none',
         background: 'radial-gradient(125% 100% at 50% 20%, #2C1A42 0%, #1A1030 48%, #0B0614 100%)',
       }} />
-      {/* Pressure: a dark-red glow welling from below + crushing dark edges — fades as light grows */}
+      {/* Pressure: a dark-red glow welling from below + crushing dark edges — fades as light grows (and in the grass field) */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
-        opacity: 1 - light, transition: 'opacity 1.6s ease',
+        opacity: (1 - light) * (1 - grassOn), transition: 'opacity 1.6s ease',
         background: [
           'radial-gradient(85% 60% at 50% 112%, rgba(156,22,56,.5), transparent 60%)',
           'radial-gradient(140% 125% at 50% 32%, transparent 52%, rgba(5,2,12,.9) 100%)',
+        ].join(','),
+      }} />
+      {/* Dread — a frightening, oppressive world while the devil whispers the lie */}
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        opacity: dread ? 1 : 0, transition: 'opacity 1s ease',
+        background: [
+          'radial-gradient(78% 56% at 50% 122%, rgba(158,6,24,.74), transparent 56%)',   // blood welling up from below
+          'radial-gradient(44% 36% at 14% 30%, rgba(122,0,30,.42), transparent 60%)',     // menace closing from the sides
+          'radial-gradient(44% 36% at 86% 30%, rgba(122,0,30,.42), transparent 60%)',
+          'radial-gradient(158% 122% at 50% 22%, transparent 34%, rgba(1,0,3,.97) 100%)',  // crushing black vignette
+        ].join(','),
+        animation: (dread && !reduceMotion) ? 'dreadPulse 3.4s ease-in-out infinite' : 'none',
+      }} />
+      {/* Sickly flicker of red light from below while the lie is whispered */}
+      {dread && !reduceMotion && (
+        <div aria-hidden className="dread-flicker" style={{
+          position: 'absolute', inset: 0, pointerEvents: 'none',
+          background: 'radial-gradient(60% 40% at 50% 118%, rgba(230,40,40,.5), transparent 58%)',
+        }} />
+      )}
+      {/* Grass field — a sunny meadow once the angel arrives, through the fight */}
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        opacity: grassOn, transition: 'opacity 1.4s ease',
+        background: [
+          'radial-gradient(40% 28% at 76% 18%, rgba(255,250,214,.9), rgba(255,247,200,0) 62%)',       // sun glow
+          'linear-gradient(180deg, #7FC7F0 0%, #A8DCF5 28%, #D8F0CC 52%, #A6D86A 52%, #86C455 66%, #5B9E39 82%, #468A2C 100%)',
+        ].join(','),
+      }} />
+      {/* Grass-field clouds (daytime) */}
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none', filter: 'blur(2px)',
+        opacity: grassOn, transition: 'opacity 1.4s ease',
+        background: [
+          'radial-gradient(20% 11% at 24% 20%, rgba(255,255,255,.92), transparent 72%)',
+          'radial-gradient(17% 9% at 70% 15%, rgba(255,255,255,.85), transparent 72%)',
+          'radial-gradient(24% 12% at 46% 28%, rgba(255,255,255,.72), transparent 74%)',
         ].join(','),
       }} />
       {/* Hopeful dawn sky — rises in as the boy overcomes */}
@@ -244,10 +294,10 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
         maskImage: 'radial-gradient(90% 85% at 50% 0%, #000 10%, transparent 78%)',
       }} />
 
-      {/* Character spotlight — keeps the cast prominent. Cool while oppressed, warm in victory. */}
+      {/* Character spotlight — keeps the cast prominent. Cool while oppressed, warm in victory, off in daylight. */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
-        opacity: 0.9 - light * 0.5, transition: 'opacity 1.4s ease',
+        opacity: (0.9 - light * 0.5) * (1 - grassOn), transition: 'opacity 1.4s ease',
         background: 'radial-gradient(52% 46% at 50% 52%, rgba(176,166,214,.22), transparent 70%)',
       }} />
       <div aria-hidden style={{
@@ -256,8 +306,8 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
         background: 'radial-gradient(60% 54% at 50% 50%, rgba(255,244,206,.5), transparent 72%)',
       }} />
 
-      {/* Oppression motes — dark/red flecks drifting in the fear & fight (fade with light) */}
-      {!reduceMotion && light < 0.6 && (
+      {/* Oppression motes — dark/red flecks drifting in the fear & fight (gone in the grass field) */}
+      {!reduceMotion && light < 0.6 && !grass && (
         <div aria-hidden style={{ position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 1 - light, transition: 'opacity 1.2s ease' }}>
           {ENV_MOTES.map((p, i) => (
             <span key={i} style={{
@@ -352,6 +402,11 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
             </div>
           )}
 
+          {/* The lie the devil plants — rises from the boy's head as a thought cloud */}
+          {(ip === 2 || ip === 3) && lie && (
+            <ThoughtCloud text={lie} reduceMotion={reduceMotion} />
+          )}
+
           {/* BOY (M) — afraid → reaches for the scroll → opens it */}
           <div style={{
             position: 'absolute', left: M_LEFT, bottom: GROUND, height: `${CH}%`, width: 'auto',
@@ -375,7 +430,7 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
           {/* ANGEL (A) — flies in at Scene 2, hovers while the scroll changes hands */}
           {ip >= 4 && (
             <div style={{
-              position: 'absolute', left: A_LEFT, bottom: GROUND, height: `${CH}%`, width: 'auto',
+              position: 'absolute', left: A_LEFT, bottom: A_BOTTOM, height: `${CH}%`, width: 'auto',
               transformOrigin: '50% 100%', pointerEvents: 'none',
             }}>
               <img src={ip <= 5 ? ART.aFly : ART.aWatch} alt="" aria-hidden style={{
@@ -399,7 +454,7 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
               The blur makes the fade read as a soft dissolution (and hides SVG rasterisation).
               Unmounts the instant he's fully dissolved (fp ≥ 3) so no faded GPU
               layer lingers, and never renders on the peace page. */}
-          {!isPeace && !(isClimax && fp >= 3) && (
+          {!isPeace && !(isClimax && fp >= 2) && (
           <img src={dSrc} alt="" aria-hidden style={{
             position: 'absolute',
             left: D_LEFT,
@@ -407,15 +462,18 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
             height: `${CH}%`,
             width: 'auto',
             transformOrigin: '50% 100%',
-            opacity: isClimax ? (fp >= 2 ? 0 : 0.92) : 1, // defeated → dissolves → gone
+            transform: 'translateZ(0)', backfaceVisibility: 'hidden', willChange: 'transform',  // own GPU layer → crisp at fractional DPR
+            opacity: isClimax ? (fp >= 1 ? 0 : 0.92) : 1, // defeated → snaps out quickly → gone
             filter: 'none',
             animation: reduceMotion ? 'none' : flash ? 'dHit .5s ease-out' : 'none',
-            transition: 'opacity 1.2s ease',
+            transition: 'opacity .35s ease',
             pointerEvents: 'none',
           }} />
           )}
 
-          {/* BOY (M) — victorious; grows UPWARD (feet fixed) once the darkness breaks */}
+          {/* BOY (M) — victorious; grows UPWARD (feet fixed) once the darkness breaks.
+              Hidden the moment the embrace begins (the hug image carries both figures). */}
+          {!hugging && (
           <img src={mSrc} alt="" aria-hidden style={{
             position: 'absolute',
             left: punching ? '32%' : M_LEFT,
@@ -423,26 +481,47 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
             height: `${grown ? CH + 16 : CH}%`,       // grows taller — strength
             width: 'auto',
             transformOrigin: '50% 100%',               // anchored at the feet → growth goes up
+            transform: 'translateZ(0)', backfaceVisibility: 'hidden', willChange: 'transform',  // own GPU layer → crisp at fractional DPR
             filter: 'none',
             animation: reduceMotion ? 'none' : finale ? 'mPopIn .6s ease-out both' : 'none',
             transition: 'left .25s ease, height .9s cubic-bezier(.2,.9,.3,1), filter .8s ease',
             pointerEvents: 'none',
           }} />
+          )}
 
-          {/* ANGEL (A) — watches in the fight; in the finale waves, then flies away (fp ≥ 1).
-              Gone from the peace page (already departed). */}
-          {showAngel && !isPeace && (
-            <img src={aSrc} alt="" aria-hidden style={{
+          {/* ANGEL (A) — watches in the fight and the opening victory beat, then
+              steps in for the embrace (the hug image takes over). */}
+          {showAngel && !hugging && (
+            <img src={ART.aWatch} alt="" aria-hidden style={{
               position: 'absolute',
               left: A_LEFT,
-              bottom: GROUND,
+              bottom: A_BOTTOM,
               height: `${CH}%`,
               width: 'auto',
               filter: 'none',
-              animation: reduceMotion ? 'none'
-                : (isClimax && fp >= 1) ? 'angelWaveOff 2.4s ease-in both'
-                : 'aHover 3s ease-in-out infinite',
+              animation: reduceMotion ? 'none' : 'aHover 3s ease-in-out infinite',
               pointerEvents: 'none',
+            }} />
+          )}
+
+          {/* HUG (M + A) — the boy and the angel embrace to close the battle,
+              in place of the angel flying away. A single two-figure image. */}
+          {hugging && (
+            <img key="hug" src={ART.hug} alt="" aria-hidden style={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              height: '78%',
+              maxHeight: '78%',
+              maxWidth: '84%',
+              width: 'auto',
+              objectFit: 'contain',
+              transform: 'translate(-50%,-50%)',
+              transformOrigin: '50% 50%',
+              filter: 'drop-shadow(0 8px 22px rgba(0,120,190,.35))',
+              animation: reduceMotion ? 'none' : 'hugIn 1.5s cubic-bezier(.22,1,.36,1) both',
+              pointerEvents: 'none',
+              zIndex: 3,
             }} />
           )}
 
@@ -507,7 +586,7 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
       {/* Edge vignette — frames & darkens the oppressive world, lifts away in the light */}
       <div aria-hidden style={{
         position: 'absolute', inset: 0, borderRadius: 16, pointerEvents: 'none',
-        boxShadow: `inset 0 0 70px rgba(8,4,16,${(0.55 + burn * 0.15) * (1 - light)})`,
+        boxShadow: `inset 0 0 70px rgba(8,4,16,${(0.55 + burn * 0.15) * (1 - light) * (1 - grassOn)})`,
         transition: 'box-shadow 1.4s ease',
       }} />
 
@@ -523,6 +602,7 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
         @keyframes aFlyIn        { 0%{opacity:0;transform:translateX(55%) translateY(-18%) scale(.7)} 100%{opacity:1;transform:translateX(0) translateY(0) scale(1)} }
         @keyframes aHover        { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5%)} }
         @keyframes angelWaveOff  { 0%{opacity:1;transform:translate(0,0) rotate(0)} 20%{transform:translate(0,-3%) rotate(-5deg)} 40%{transform:translate(0,0) rotate(5deg)} 60%{opacity:1;transform:translate(8%,-5%) rotate(0)} 100%{opacity:0;transform:translate(50%,-45%) scale(.55)} }
+        @keyframes hugIn         { 0%{opacity:0;transform:translate(-50%,-50%) scale(.84)} 100%{opacity:1;transform:translate(-50%,-50%) scale(1)} }
         @keyframes punchFxAnim   { 0%{opacity:0;transform:scale(.3) rotate(-14deg)} 30%{opacity:1;transform:scale(1.1) rotate(5deg)} 100%{opacity:0;transform:scale(1.35) rotate(10deg)} }
         /* Scene 1 — fear & temptation */
         @keyframes s1Tremble     { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-1.5px)} 50%{transform:translateX(1px)} 75%{transform:translateX(-1px)} }
@@ -531,6 +611,16 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
         @keyframes dBounce       { 0%{transform:translateY(0) scale(1)} 35%{transform:translateY(-7%) scale(1.03)} 70%{transform:translateY(0) scale(1)} 100%{transform:translateY(0) scale(1)} }
         @keyframes dWhisper      { 0%,100%{transform:translate(0,0) rotate(0)} 50%{transform:translate(1.5%,-1%) rotate(1.5deg)} }
         @keyframes whisperFloat  { 0%{opacity:0;transform:translate(0,0) scale(.6)} 30%{opacity:.7} 100%{opacity:0;transform:translate(14px,-16px) scale(1.1)} }
+        /* Thought cloud (the planted lie) */
+        @keyframes thoughtPop    { 0%{opacity:0;transform:scale(.5) translateY(10%)} 62%{opacity:1;transform:scale(1.05) translateY(-1%)} 100%{opacity:1;transform:scale(1) translateY(0)} }
+        @keyframes thoughtBob    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5%)} }
+        .thought-bob             { animation:thoughtBob 3.2s ease-in-out infinite }
+        @media (prefers-reduced-motion: reduce){ .thought-bob{animation:none} }
+        /* Dread atmosphere while the lie is whispered */
+        @keyframes dreadPulse    { 0%,100%{opacity:.82} 50%{opacity:1} }
+        @keyframes dreadFlicker  { 0%,100%{opacity:.35} 20%{opacity:.7} 35%{opacity:.25} 55%{opacity:.85} 70%{opacity:.4} 85%{opacity:.75} }
+        .dread-flicker           { animation:dreadFlicker 2.1s ease-in-out infinite }
+        @media (prefers-reduced-motion: reduce){ .dread-flicker{animation:none} }
         /* Environment */
         @keyframes moteRise      { 0%,100%{transform:translate(0,0);opacity:.2} 50%{transform:translate(-4px,-14px);opacity:.8} }
         @keyframes sparkFloat    { 0%{transform:translate(0,6px) scale(.5);opacity:0} 35%{opacity:1} 100%{transform:translate(2px,-20px) scale(1);opacity:0} }
@@ -539,6 +629,61 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
         .env-rays                { transform-origin:50% 0%; animation:envRays 9s ease-in-out infinite alternate }
         @media (prefers-reduced-motion: reduce) { .env-rays{animation:none} }
       `}</style>
+    </div>
+  );
+}
+
+// ── Thought cloud ──────────────────────────────────────────────────────────
+// The lie the devil plants, shown as a classic thought bubble rising from the
+// boy's head. The cloud silhouette is drawn as a union of ellipses: a blue
+// layer underneath and a slightly inset white layer on top, so only a clean
+// blue outline rings the merged shape (no internal seams).
+function ThoughtCloud({ text, reduceMotion }: { text: string; reduceMotion?: boolean }) {
+  const BLUE = '#0088D1';
+  const INSET = 5;
+  const BUMPS = [
+    { cx: 100, cy: 82, rx: 82, ry: 33 }, // base
+    { cx: 30,  cy: 78, rx: 24, ry: 24 },
+    { cx: 46,  cy: 58, rx: 30, ry: 30 },
+    { cx: 92,  cy: 42, rx: 37, ry: 37 }, // tall centre bump
+    { cx: 140, cy: 54, rx: 32, ry: 32 },
+    { cx: 170, cy: 72, rx: 25, ry: 25 },
+  ];
+  return (
+    <div aria-hidden style={{
+      position: 'absolute', top: '0%', left: '39%', width: '54%', zIndex: 6, pointerEvents: 'none',
+      animation: reduceMotion ? 'none' : 'thoughtPop .5s cubic-bezier(.2,.9,.3,1) both',
+    }}>
+      <div className={reduceMotion ? undefined : 'thought-bob'} style={{ position: 'relative', width: '100%', aspectRatio: '200 / 120' }}>
+        <svg viewBox="0 0 200 120" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', filter: 'drop-shadow(0 6px 14px rgba(0,80,130,.28))' }}>
+          <g fill={BLUE}>
+            {BUMPS.map((b, i) => <ellipse key={i} cx={b.cx} cy={b.cy} rx={b.rx} ry={b.ry} />)}
+          </g>
+          <g fill="#FFFFFF">
+            {BUMPS.map((b, i) => <ellipse key={i} cx={b.cx} cy={b.cy} rx={b.rx - INSET} ry={b.ry - INSET} />)}
+          </g>
+        </svg>
+        <div style={{
+          position: 'absolute', inset: '27% 15% 23%', display: 'grid', placeItems: 'center',
+          textAlign: 'center', color: '#0E2435',
+          fontFamily: 'var(--serif)', fontStyle: 'italic', fontWeight: 700,
+          lineHeight: 1.16, fontSize: 'clamp(9px, 3.1vw, 15px)',
+        }}>
+          <span>“{text}”</span>
+        </div>
+      </div>
+      {/* Trailing thought puffs — lead down-left toward the boy's head */}
+      {[
+        { s: 15, l: '11%', t: '80%' },
+        { s: 9,  l: '3%',  t: '97%' },
+        { s: 5,  l: '-3%', t: '110%' },
+      ].map((p, i) => (
+        <span key={i} style={{
+          position: 'absolute', left: p.l, top: p.t, width: p.s, height: p.s,
+          borderRadius: '50%', background: '#FFFFFF', border: `2px solid ${BLUE}`,
+          boxShadow: '0 3px 8px rgba(0,80,130,.22)',
+        }} />
+      ))}
     </div>
   );
 }
