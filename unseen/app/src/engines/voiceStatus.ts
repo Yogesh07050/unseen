@@ -1,5 +1,6 @@
 // Voice capability / permission / server-readiness probes for the Cry Out indicator.
 import { voiceCaptureSupported } from './audio';
+import { apiUrl } from '../ai/base';
 
 export type VoiceStatus =
   | 'checking' | 'ready' | 'needs_permission' | 'denied' | 'unsupported'
@@ -35,7 +36,7 @@ let serverReady: boolean | null = null;
 export async function voiceServerReady(): Promise<boolean> {
   if (serverReady !== null) return serverReady;
   try {
-    const res = await fetch('/api/health');
+    const res = await fetch(apiUrl('/api/health'));
     const j = await res.json();
     serverReady = !!j.openai;
   } catch {

@@ -32,24 +32,32 @@ export interface Discernment {
 }
 
 export interface VerseRef { bibleId: number; usfm: string[]; reference: string }
-export interface Passage { bibleId: number; usfm: string[]; reference: string; text: string; copyright: string }
+// version, versionTitle and copyright describe the Bible that actually served the
+// text (the chosen version, or the public-domain BSB when it stood in) — the
+// copyright notice must be displayed with the text (YouVersion licence terms).
+export interface Passage {
+  bibleId: number; usfm: string[]; reference: string; text: string;
+  version: string; versionTitle: string; copyright: string;
+}
 // A VerifiedVerse is only ever produced by engines/verify.ts
 export type VerifiedVerse = Passage & { phrases: string[]; __verified: true };
 
+// Every record the app keeps carries `updatedAt` (ms): the sealed store and the
+// server copy (database/migrations/0002_user_data.sql) merge by last write.
 export interface Battle {
   id: string; startedAt: number; endedAt?: number; timeZone: string;
   channel: Channel; struggle: Struggle; archetype: ArchetypeId;
   lie: string; lieClusterId: string; stirredBy: string[];
   triggers: Trigger[]; contextType: ContextType; front: Front; intensity: number;
-  verse: VerseRef; backup?: VerseRef;
+  verse: VerseRef; backup?: VerseRef; backups?: VerseRef[]; why?: string;
   strikes: number; outcome: Outcome; escapeTaken?: string;
   secondsToPeace?: number; allyAcks: number; offline: boolean;
-  promptVersion: string; model?: string; demo?: boolean;
+  promptVersion: string; model?: string; updatedAt?: number;
 }
 
 export interface Stone {
   id: string; battleId?: string; kind: 'stood' | 'rose_again' | 'from_memory';
-  date: string; verse?: VerseRef; note?: string; demo?: boolean;
+  date: string; verse?: VerseRef; note?: string; updatedAt?: number;
 }
 
 export interface Transcript { id: string; text: string; expiresAt: number }
@@ -61,7 +69,7 @@ export interface LieCluster {
 
 export interface ArmoryVerse {
   id: string; verse: VerseRef; firstWords: string;
-  sharpness: 0 | 1 | 2 | 3 | 4 | 5; nextDrillAt: number; wins: number; drills: number;
+  sharpness: 0 | 1 | 2 | 3 | 4 | 5; nextDrillAt: number; wins: number; drills: number; updatedAt?: number;
 }
 
 export type PlanAction = {
@@ -72,23 +80,28 @@ export type PlanAction = {
 export interface WatchWindow {
   id: string; weekday: 0 | 1 | 2 | 3 | 4 | 5 | 6; startHour: number; endHour: number;
   score: number; battles: number; reason: string; level: 'high' | 'medium';
-  plan: PlanAction[]; approved: boolean; lastAlertAt?: number; dismissals: number;
+  plan: PlanAction[]; approved: boolean; lastAlertAt?: number; dismissals: number; updatedAt?: number;
 }
 
 export interface Ally {
   id: string; name: string; role?: string; pronoun?: 'he' | 'she' | 'they';
   phone?: string; consentAt: number;
+  lastAskedAt?: number; // when a prayer link was last created for them
+  updatedAt?: number;
 }
 
 export interface Settings {
   id: 'me'; firstName?: string; tradition?: 'evangelical' | 'catholic' | 'mainline';
   bibleId: number; battleStyle: 'cinematic' | 'symbolic'; reduceMotion: boolean; sound: boolean;
-  retentionDays: 7 | 30 | null; lock: 'none' | 'webauthn'; credentialId?: string;
+  retentionDays: 7 | 30 | null;
   watchAlerts: 'off' | 'in_app' | 'calendar' | 'push'; adultConfirmedAt: number; onboardedAt: number;
   counsellorUrl?: string; crisisCountry?: string;
   theme?: 'light' | 'dark' | 'system';
+  // 'gloo' = the model reads the words (default); 'instant' = on-device keyword read only, no network.
   discernMode?: 'gloo' | 'instant';
+  discernChosen?: boolean; // the person picked a mode themselves (older installs defaulted to 'instant')
   armorIntention?: string; armorPeaceStep?: string; armorIdentity?: string; armorAlly?: string; armorPlanArmed?: boolean;
+  updatedAt?: number;
 }
 
 export interface LocalEvent {

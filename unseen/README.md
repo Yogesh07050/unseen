@@ -18,6 +18,8 @@ This repository implements the hackathon MVP from the Technical Design Document.
   and Kairos Watch, and every screen.
 - **`server/`** — FastAPI proxy. Holds the API keys, forwards redacted text to
   Gloo and verse requests to YouVersion, rate-limits, and serves the PWA.
+- **`app/android/`** — the native **Android app**: a Capacitor 6 shell (standard
+  Gradle/Kotlin project) around the same web code. See *Android app* below.
 
 ### Voice input uses OpenAI Whisper
 
@@ -49,11 +51,13 @@ demo runs without any credentials**:
   discernment/compose fallback (the same keyword classifier the phone uses when
   offline).
 - No **YouVersion** key → the server serves the bundled public-domain **Berean
-  Standard Bible** text. Displayed verses are still verified against the API
-  response, so the `VerifiedVerse` guarantee holds.
+  Standard Bible** text and offers no other version. Displayed verses are still
+  verified against the API response, so the `VerifiedVerse` guarantee holds.
 
 Add real keys in `.env` to switch both to the live partner APIs. Nothing else
-changes.
+changes. A circuit breaker makes a failing Gloo upstream **fail fast** to the
+deterministic path instead of costing users seconds (`/api/health` reports it
+as `glooCircuit`). Copy `.env.example` to get started.
 
 ## Run it
 
@@ -89,21 +93,61 @@ STATIC_DIR=../app/dist uvicorn app.main:app --port 8000
 # open http://localhost:8000
 ```
 
+## Android app (native shell)
+
+The PWA ships as a real Android app through **Capacitor 6** — `app/android/` is
+a standard Gradle/Kotlin project. Every screen, engine and animation is the web
+code, unchanged; the shell adds what only the platform can do:
+
+- Native haptics on each Scripture strike, the native share sheet (Allies,
+  Reel), hardware **Back** (un-hides the privacy screen / goes back / steps out
+  from Home — never kills a battle), splash + status bar that follow the theme,
+  and online/offline from the OS.
+- `allowBackup="false"` — the encrypted log is never cloud-backed-up.
+
+Requirements: **JDK 17** (Capacitor 6 / AGP 8.2.1) and Android SDK platform 34.
+
+```bash
+cd app
+# 1. Web bundle pointed at your backend. The WebView serves the UI from its own
+#    origin, so the API host must be explicit (your LAN IP for a device demo):
+VITE_API_BASE=http://192.168.0.123:8000 npm run build:native   # vite build + cap sync
+# 2. Launcher icon + splash (generated from public/icons; re-run if they change)
+npm run android:assets
+# 3. Debug APK
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ANDROID_HOME=~/Android/Sdk
+npm run android:apk        # → android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+The server must allow the app's origin — `CORS_ORIGINS` already includes
+`https://localhost` (the Capacitor WebView origin). For a LAN demo the shell is
+configured for plain HTTP (`server.cleartext`, `android.allowMixedContent` in
+`capacitor.config.ts`, and `usesCleartextTraffic` in the manifest): **remove all
+three for a production build whose API is served over HTTPS.**
+
+Troubleshooting: if you move the repo, recreate the server venv
+(`python3 -m venv --clear .venv && pip install -r requirements.txt`) — venv
+entry scripts hard-code their original path (or run `python -m uvicorn …`).
+
 ## Trying the demo
 
 1. Finish the short onboarding (18+, name, tradition, Bible).
 2. On Home, tap **or tap to type**, enter:
    *"My brother just humiliated me in the family chat and I want to fire back
    something cruel."*
-3. Confirm the discernment (Anger · "He deserves it."), read/tap the verse to
-   strike each phrase, watch the climax at the cross, pick a way of escape, and
-   lay a stone.
+3. Confirm the discernment — the model names the struggle and the lie in your
+   own words (Anger · "He deserves to hear it.") — read/tap the verse the model
+   chose from the Truth Index and YouVersion search, strike each phrase, watch
+   the climax at the cross, pick a way of escape, and lay a stone.
 4. **Safe Harbor edge case:** type *"I don't want to be alive anymore"* — it
    opens Safe Harbor with **no network call and no battle imagery**.
-5. **Patterns:** Settings → **Demo controls** → *Load 8 weeks of demo data*,
-   then open **Schemes** (Sunday "6 to 9" is darkest; "He deserves it." is a
-   stronghold) and **Watch** (a Sunday-evening window; calendar export names no
-   struggle).
+5. **Patterns:** give the install an eight-week history from the server
+   (`server/.venv/bin/python database/seeds/seed_user.py --all-recent --name Yogesh`,
+   then reopen the app), and open **Schemes** (Sunday "6 to 9" is darkest;
+   the Friday "Just five more minutes." lie is a stronghold), **Stones**,
+   **Armory**, **Allies** and **Watch** (a Sunday-evening window; calendar
+   export names no struggle).
 
 ## AI evaluation (Track 2 evidence)
 
@@ -144,6 +188,54 @@ Copy `.env.example` to a gitignored `.env` (the server reads `.env`, not the
 example). With a `YVP_APP_KEY`, verses are fetched live from YouVersion; with
 `GLOO_*`, discernment/compose use Gloo. Keep real keys out of `.env.example`.
 
+### Discernment and verse choice are model-driven
+
+With Gloo credentials, every battle runs through the model (`discernMode:
+'gloo'`, the default): the discernment prompt (`server/app/services/prompts.py`,
+`discern@2`) reads the person's words and reports the struggle, **the lie in
+their own words**, what stirred it, triggers, context, front, intensity,
+confidence and two or three topical search phrases. The server then builds a
+candidate pool for `POST /api/truth` — the curated Truth Index verses for that
+struggle plus **YouVersion verse-search hits** for the lie and the search
+phrases — fetches each candidate's text in the chosen version and asks the model
+to pick a primary verse and up to three ordered backups, which the phone
+byte-verifies before showing. "Still fighting" steps through the backups.
+
+Offline, or with "On this phone only" chosen in Settings, an on-device read
+runs instead: it still derives the lie from the person's own clause, the
+triggers and context from the words present, and picks the closest curated
+verse; the card says so and asks for a correction.
+
+### Your data
+
+There are no accounts. The phone keeps an AES-GCM sealed copy of everything and
+pushes each write through an outbox to `POST /api/me`, keyed by the anonymous
+install id; on boot and when the connection returns it pulls changes with
+`GET /api/me?since=`. Battles, stones, allies, Armory and Watch windows
+therefore survive a reinstall and show on a second device that shares the
+install id. Spoken transcripts never leave the phone. "Delete everything"
+wipes the server copy first (`DELETE /api/me`). See `database/README.md`.
+
+To give a device a lived-in history (Stones, Schemes, Watch, Armory, Allies):
+
+```bash
+cd unseen && server/.venv/bin/python database/seeds/seed_user.py --all-recent --name Yogesh
+```
+
+### Bible versions (YouVersion Platform)
+
+With a `YVP_APP_KEY`, `GET /api/bibles` lists the English Bibles the key is
+licensed for (`GET /v1/bibles?language_ranges[]=en` upstream, cached 6 h).
+The onboarding "Bible version" step and Settings → "Bible version" let the
+user pick one; the choice is `settings.bibleId` on the phone. Every verse is
+then fetched live (`/api/verse/{bibleId}/{usfm}`) and displayed with the
+reference, the version's title and the copyright notice YouVersion supplies
+for it (`/api/bible/{bibleId}`), as the licence requires. If a chosen version
+cannot serve a verse (upstream down, verse not in that version's canon) the
+public-domain BSB stands in **and is labelled as the BSB** — text from one
+version is never shown under another's name. Licensed text is cached on the
+phone for a week; the BSB for good, so battles work offline.
+
 ## How it keeps its promises
 
 - **Scripture is the weapon, never generated.** The model only chooses
@@ -170,5 +262,7 @@ example). With a `YVP_APP_KEY`, verses are fetched live from YouVersion; with
 | AI proxy | `server/app/routers/ai.py`, `services/prompts.py` |
 | Whisper STT | `server/app/routers/speech.py`, `services/openai_stt.py`, `app/src/engines/audio.ts` |
 | Bible proxy + offline BSB | `server/app/routers/bible.py`, `services/youversion.py` |
+| Gloo client + circuit breaker | `server/app/services/gloo.py` |
+| Native shell (haptics, share, back, splash) | `app/src/native/index.ts`, `app/capacitor.config.ts` |
 
 See `LICENSE`, `THIRD_PARTY_LICENSES.md` and `ASSETS.md`.

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, DemoTag, Panel, QuoteLine } from '../components/ui';
+import { Button, Panel, QuoteLine } from '../components/ui';
 import { SharpnessMeter } from '../components/charts';
 import { allArmory, allBattles, allStones, saveArmory } from '../data/repos';
 import { getPassage } from '../engines/verses';
@@ -62,7 +62,6 @@ export function Armory() {
           </Panel>
         ))}
       </div>
-      {stones.some((s) => s.demo) && <DemoTag />}
     </div>
   );
 }

@@ -46,7 +46,14 @@ export const FIXED_FRAGMENTS: Record<string, { usfm: string; text: string }> = {
   onboarding: { usfm: '2KI.6.17', text: 'Then Elisha prayed, “O LORD, please open his eyes that he may see.”' },
   ebenezer: { usfm: '1SA.7.12', text: 'Thus far the LORD has helped us.' },
   schemes: { usfm: '2CO.2.11', text: 'For we are not unaware of his schemes.' },
+  // Battle intro captions (Ephesians 6, bundled public-domain BSB)
+  sword: { usfm: 'EPH.6.17', text: 'the sword of the Spirit, which is the word of God' },
+  stand: { usfm: 'EPH.6.13', text: 'you will be able to stand your ground' },
 };
+
+// Filled at boot by App.verifyFixedFragments(): key → whether the fragment was found
+// verbatim in the fetched verse. Screens hide a fragment whose entry is explicitly false.
+export const FIXED_OK: Record<string, boolean> = {};
 
 export function allFixedUsfm(): string[] {
   const out = new Set<string>();

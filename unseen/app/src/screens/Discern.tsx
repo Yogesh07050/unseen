@@ -93,6 +93,7 @@ export function Discern() {
         <h1 className="title" style={{ fontSize: 24 }}>{lowConf ? 'Is this right?' : 'What UNSEEN heard'}</h1>
       </div>
       {ctx.offline && <span className="tiny" style={{ color: 'var(--gold-hi)' }}>Offline: using your saved verses</span>}
+      {!ctx.offline && ctx.model === 'on-device-classifier' && <span className="tiny" style={{ color: 'var(--gold-hi)' }}>Read on this phone, no AI. Tap to correct it.</span>}
       <p className="small muted">Tap anything to correct it</p>
 
       <Panel>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Chip, DemoTag, QuoteLine } from '../components/ui';
+import { Button, Chip, QuoteLine } from '../components/ui';
 import { StoneTile } from '../components/StoneTile';
 import { allStones, saveStone } from '../data/repos';
 import { localDate, recompute } from '../battle/useBattle';
@@ -26,7 +26,6 @@ export function Stones() {
     };
   }, [stones]);
 
-  const hasDemo = stones.some((s) => s.demo);
   const shown = filter === 'All' ? stones
     : filter === 'Stood' ? stones.filter((s) => s.kind === 'stood')
     : filter === 'Rose again' ? stones.filter((s) => s.kind === 'rose_again')
@@ -62,7 +61,6 @@ export function Stones() {
         <Legend color="var(--spirit-2)" label="Won from memory" />
         <Legend color="var(--rose)" label="Rose again" />
       </div>
-      {hasDemo && <DemoTag />}
 
       <div className="spacer" />
       <Button variant="ghost" onClick={wonFromMemory}>I won without opening UNSEEN</Button>

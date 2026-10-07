@@ -25,7 +25,14 @@ class Settings(BaseSettings):
 
     default_bible_id: int = 3034
     redis_url: str | None = None
+    # PostgreSQL (asyncpg DSN). Optional: unset = prayer links stay in Redis/memory
+    # and the Truth Index is served from the bundled JSON, so the keyless demo runs.
+    database_url: str | None = None
     app_base_url: str = "http://localhost:8000"
+    # Origins allowed to call /api cross-origin. The browser PWA is same-origin
+    # and needs none; the native Android shell (Capacitor) serves the UI from
+    # its own origin and must be listed. Comma-separated.
+    cors_origins: str = "https://localhost,capacitor://localhost,http://localhost"
     static_dir: str = "static"
     env: str = "development"
     log_level: str = "info"

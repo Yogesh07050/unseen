@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { apiUrl } from '../ai/base';
 
 // Public, content-free prayer page (§11). Loads no app data, needs no lock.
 export function AllyPage() {
@@ -11,7 +12,7 @@ export function AllyPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`/api/pray/${token}`);
+        const res = await fetch(apiUrl(`/api/pray/${token}`));
         if (res.status === 410) { setState('expired'); return; }
         if (localStorage.getItem(localKey)) { setState('done'); return; }
         setState('ready');
@@ -21,7 +22,7 @@ export function AllyPage() {
 
   async function pray() {
     try {
-      const res = await fetch(`/api/pray/${token}/ack`, { method: 'POST' });
+      const res = await fetch(apiUrl(`/api/pray/${token}/ack`), { method: 'POST' });
       if (res.ok) { localStorage.setItem(localKey, '1'); setState('done'); }
       else setState('expired');
     } catch { setState('expired'); }

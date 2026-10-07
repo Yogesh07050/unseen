@@ -2,9 +2,8 @@ import re
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 
-from ..config import settings
 from ..deps import rate_limit
-from ..schemas import BibleOut, VerseOut, VerseSearchOut, VotdOut
+from ..schemas import BibleListOut, BibleOut, VerseOut, VerseSearchOut, VotdOut
 from ..services import youversion
 
 router = APIRouter()
@@ -18,15 +17,27 @@ async def verse(bible_id: int, usfm: str, request: Request, response: Response) 
     if not _USFM.match(usfm):
         raise HTTPException(400, detail={"code": "bad_request", "message": "Bad USFM id"})
     v = await youversion.get_verse(request.app.state.http, bible_id, usfm)
-    if bible_id == settings.default_bible_id:
-        response.headers["Cache-Control"] = "public, max-age=86400"
+    # A verse's text in a given version does not change: let the browser and the
+    # service worker keep it for a day (every version, not only the default).
+    response.headers["Cache-Control"] = "public, max-age=86400"
     return VerseOut(**v)
+
+
+@router.get("/bibles", response_model=BibleListOut,
+            dependencies=[Depends(rate_limit("bibles", 60, 3600))])
+async def bibles(request: Request, response: Response) -> BibleListOut:
+    """The Bible versions this deployment may show (licensed through YouVersion)."""
+    out = await youversion.list_bibles(request.app.state.http, request.app.state.kv)
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return BibleListOut(**out)
 
 
 @router.get("/bible/{bible_id}", response_model=BibleOut,
             dependencies=[Depends(rate_limit("bible", 300, 3600))])
-async def bible(bible_id: int, request: Request) -> BibleOut:
-    return BibleOut(**await youversion.get_bible(request.app.state.http, bible_id))
+async def bible(bible_id: int, request: Request, response: Response) -> BibleOut:
+    info = await youversion.get_bible(request.app.state.http, request.app.state.kv, bible_id)
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return BibleOut(**info)
 
 
 @router.get("/verse-search", response_model=VerseSearchOut,
@@ -41,7 +52,9 @@ async def verse_search(request: Request, q: str = Query(min_length=1, max_length
 
 @router.get("/votd", response_model=VotdOut,
             dependencies=[Depends(rate_limit("votd", 300, 3600))])
-async def votd(day: int = Query(ge=1, le=366)) -> VotdOut:
-    # Offline-friendly: a deterministic rotation over the fixed verse-of-the-day pool.
-    pool = ["PHP.4.6", "ISA.41.10", "ROM.8.1", "PSA.119.11", "1CO.10.13", "MIC.7.8", "PSA.34.18"]
-    return VotdOut(day=day, passageId=pool[day % len(pool)])
+async def votd(request: Request, response: Response, day: int = Query(ge=1, le=366)) -> VotdOut:
+    """YouVersion's verse of the day (a passage id such as JAS.5.16 or PHP.4.6-7);
+    a fixed rotation when the Platform cannot be reached."""
+    out = await youversion.verse_of_the_day(request.app.state.http, request.app.state.kv, day)
+    response.headers["Cache-Control"] = "public, max-age=3600"
+    return VotdOut(**out)

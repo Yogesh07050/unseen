@@ -1,6 +1,12 @@
 import type { Battle, LieCluster, Outcome, Struggle, WatchWindow } from '../types';
 
 const DAY = 86400_000;
+
+// 1-366, in the device's local time.
+export function dayOfYear(d = new Date()): number {
+  const start = new Date(d.getFullYear(), 0, 0);
+  return Math.floor((d.getTime() - start.getTime()) / DAY);
+}
 export const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 export const WEEKDAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 export const COLUMNS = ['Morning', 'Afternoon', '6 to 9', '9 to 12', 'After 12'];

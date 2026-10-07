@@ -13,6 +13,8 @@ WORKDIR /srv
 COPY server/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY server/app ./app
+# Migrations + seed, so the compose `migrate` service can run /srv/database/migrate.py
+COPY database ./database
 COPY --from=web /src/app/dist ./static
 RUN useradd --system --uid 10001 unseen
 USER unseen

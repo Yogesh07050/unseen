@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Chip, Panel, Vellum, VerseSkeleton } from '../components/ui';
+import { Button, Chip, Panel, Vellum, VerseAttribution, VerseSkeleton } from '../components/ui';
 import { getVerified } from '../engines/verses';
+import { BSB } from '../engines/bibles';
 import { saveStone, allBattles } from '../data/repos';
 import { localDate, recompute } from '../battle/useBattle';
 import { useSettings, useUi } from '../store';
@@ -14,7 +15,7 @@ const FIRST: { label: string; value: Trigger }[] = [
 
 export function Rise() {
   const navigate = useNavigate();
-  const { allies } = useSettings();
+  const { allies, settings } = useSettings();
   const { showToast } = useUi();
   const [micah, setMicah] = useState<VerifiedVerse | null>(null);
   const [john, setJohn] = useState<VerifiedVerse | null>(null);
@@ -25,9 +26,10 @@ export function Rise() {
 
   useEffect(() => {
     (async () => {
+      const bibleId = useSettings.getState().settings?.bibleId ?? BSB;
       const [m, j] = await Promise.all([
-        getVerified(3034, ['MIC.7.8']).catch(() => null),
-        getVerified(3034, ['1JN.1.9']).catch(() => null),
+        getVerified(bibleId, ['MIC.7.8']).catch(() => null),
+        getVerified(bibleId, ['1JN.1.9']).catch(() => null),
       ]);
       setMicah(m); setJohn(j); setVersesLoading(false);
       const battles = await allBattles();
@@ -38,7 +40,7 @@ export function Rise() {
   }, []);
 
   async function layStone() {
-    await saveStone({ id: crypto.randomUUID(), kind: 'rose_again', date: localDate(), verse: { bibleId: 3034, usfm: ['MIC.7.8'], reference: 'Micah 7:8' }, note: note || undefined });
+    await saveStone({ id: crypto.randomUUID(), kind: 'rose_again', date: localDate(), verse: { bibleId: micah?.bibleId ?? BSB, usfm: ['MIC.7.8'], reference: micah?.reference ?? 'Micah 7:8' }, note: note || undefined });
     await recompute();
     showToast('A rose-again stone is laid. Nothing earlier is erased.');
     navigate('/stones', { replace: true });
@@ -54,7 +56,7 @@ export function Rise() {
       {micah && (
         <Vellum>
           <span className="dropcap">{micah.text.charAt(0)}</span>{micah.text.slice(1)}
-          <div style={{ fontFamily: 'var(--sans)', fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 8 }}>{micah.reference}</div>
+          <VerseAttribution verse={micah} />
         </Vellum>
       )}
       {john ? <Vellum verse={john} /> : versesLoading ? <VerseSkeleton lines={3} /> : null}
@@ -77,9 +79,9 @@ export function Rise() {
         <Panel style={{ borderColor: 'rgba(221,167,184,.5)' }}>
           <p className="body" style={{ marginTop: 0 }}>Would it help to talk with someone this week?</p>
           <div className="row" style={{ flexWrap: 'wrap' }}>
-            {allies[0] && <Chip label={`Talk to ${allies[0].name}`} />}
-            <Chip label="Message a pastor" />
-            <Chip label="Find a counsellor" />
+            {allies[0] && <Chip label={`Talk to ${allies[0].name}`} onClick={() => { window.location.href = allies[0].phone ? `tel:${allies[0].phone}` : 'sms:'; }} />}
+            <Chip label="Message a pastor" onClick={() => { window.location.href = 'sms:'; }} />
+            <Chip label="Find a counsellor" onClick={() => { window.open(settings?.counsellorUrl ?? 'https://findahelpline.com', '_blank', 'noopener'); }} />
           </div>
         </Panel>
       )}

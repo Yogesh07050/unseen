@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Panel, QuoteLine, Toggle } from '../components/ui';
 import { ARCHETYPES } from '../content/archetypes';
 import { allBattles, allStones } from '../data/repos';
+import { shareText } from '../native';
 import { useUi } from '../store';
 import type { Battle, Stone } from '../types';
 
@@ -39,6 +40,23 @@ export function Reel() {
 
   const atClosing = frame >= weekStones.length;
 
+  // Share the reel as detail-free text, honouring the two privacy toggles
+  // (native share sheet on Android, Web Share on the web, clipboard otherwise).
+  async function share() {
+    const text = [
+      "This week's reel",
+      ...weekStones.map((s, i) => caption(s, i)),
+      '“They have overcome him by the blood of the Lamb and by the word of their testimony.” Revelation 12:11',
+    ].join('\n');
+    try {
+      if (await shareText(text, "This week's reel")) { showToast('Shared. You send it, not UNSEEN.'); return; }
+      await navigator.clipboard?.writeText(text);
+      showToast('Copied a detail-free copy. You send it, not UNSEEN.');
+    } catch (e) {
+      if ((e as DOMException)?.name !== 'AbortError') showToast('Could not share. Your reel is still here.');
+    }
+  }
+
   return (
     <div className="screen">
       <button className="icon-btn" style={{ alignSelf: 'flex-start' }} onClick={() => navigate('/')}>Close</button>
@@ -68,7 +86,7 @@ export function Reel() {
       </Panel>
 
       <div className="spacer" />
-      <Button onClick={() => showToast('A detail-free copy is ready to share.')}>Share without details</Button>
+      <Button onClick={() => void share()}>Share without details</Button>
     </div>
   );
 }

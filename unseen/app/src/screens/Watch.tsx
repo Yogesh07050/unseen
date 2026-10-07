@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, DemoTag, Panel, QuoteLine, Toggle } from '../components/ui';
+import { Button, Panel, QuoteLine, Toggle } from '../components/ui';
 import { WatchTimeline } from '../components/charts';
 import { allBattles, allWatch } from '../data/repos';
 import { WEEKDAYS_LONG } from '../analytics';
@@ -48,7 +48,6 @@ export function Watch() {
           </div>
 
           <Button variant="ghost" onClick={() => { downloadIcs(windows); showToast('Calendar file saved. It names no struggle.'); update({ watchAlerts: 'calendar' }); }}>Add watch times to my calendar</Button>
-          {battles.some((b) => b.demo) && <DemoTag />}
         </>
       )}
     </div>

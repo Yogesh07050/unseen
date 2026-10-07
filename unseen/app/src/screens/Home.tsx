@@ -6,7 +6,8 @@ import { useSettings, useUi } from '../store';
 import { allStones, allWatch } from '../data/repos';
 import { WEEKDAYS_LONG } from '../analytics';
 import { localDate } from '../battle/useBattle';
-import { getVerified } from '../engines/verses';
+import { getVerified, verseOfTheDay } from '../engines/verses';
+import { BSB } from '../engines/bibles';
 import type { Stone, WatchWindow } from '../types';
 
 function hourLabel(h: number) {
@@ -21,6 +22,20 @@ const ICON = {
   stone: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15l5-8 4 5 3-4 4 7z"/></svg>,
   word: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5c3-1 5-1 8 1 3-2 5-2 8-1v13c-3-1-5-1-8 1-3-2-5-2-8-1z"/><path d="M12 7v12"/></svg>,
   write: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>,
+};
+
+// Time of day, re-read every minute so an app left open stays truthful.
+// Night runs from 10 pm to 5 am: at 1 am "Good morning" is a lie.
+type Band = 'morning' | 'afternoon' | 'evening' | 'night';
+function bandOf(d: Date): Band {
+  const h = d.getHours();
+  if (h >= 5 && h < 12) return 'morning';
+  if (h >= 12 && h < 17) return 'afternoon';
+  if (h >= 17 && h < 22) return 'evening';
+  return 'night';
+}
+const GREETING: Record<Band, string> = {
+  morning: 'Good morning', afternoon: 'Good afternoon', evening: 'Good evening', night: 'Good night',
 };
 
 export function Home() {
@@ -38,22 +53,27 @@ export function Home() {
   useEffect(() => {
     (async () => {
       setStones(await allStones()); setWindows(await allWatch());
-      const pool = ['PHP.4.6', 'ISA.41.10', 'ROM.8.1', 'PSA.119.11', '1CO.10.13', 'MIC.7.8', 'PSA.34.18'];
-      const date = new Date();
-      const day = Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
-      setVerseOfDay(await getVerified(3034, [pool[day % pool.length]]).catch(() => null));
+      setVerseOfDay(await verseOfTheDay(useSettings.getState().settings?.bibleId ?? BSB).catch(() => null));
     })();
   }, []);
 
-  const now = new Date();
-  const greeting = now.getHours() < 12 ? 'Good morning' : now.getHours() < 18 ? 'Good afternoon' : 'Good evening';
+  // Live clock: ticks every minute and catches up when the screen comes back.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const tick = () => setNow(new Date());
+    const id = window.setInterval(tick, 60_000);
+    document.addEventListener('visibilitychange', tick);
+    return () => { window.clearInterval(id); document.removeEventListener('visibilitychange', tick); };
+  }, []);
+  const band = bandOf(now);
+  const greeting = GREETING[band];
   const today = windows.find((w) => w.weekday === now.getDay());
   const month = now.toLocaleString('en-US', { month: 'long' });
   const fromMemory = stones.filter((s) => s.kind === 'from_memory' && s.date.startsWith(localDate().slice(0, 7))).length;
 
   // ── Contextual ribbon ────────────────────────────────────────────────────
   let ribbon: React.ReactNode = null;
-  if (now.getHours() < 12) {
+  if (band === 'morning') {
     ribbon = <Ribbon icon={ICON.armor} eyebrow="Morning Armor" title="Put on the armor" sub="Ephesians 6:13-18 · 60s" onClick={() => navigate('/morning-armor')} />;
   } else if (today) {
     ribbon = <Ribbon icon={ICON.watch} eyebrow="Tonight's watch" title={`${hourLabel(today.startHour)} – ${hourLabel(today.endHour)}`} sub={today.reason || `${WEEKDAYS_LONG[today.weekday]} nights are hardest`} onClick={() => navigate('/watch')} />;
@@ -86,7 +106,7 @@ export function Home() {
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><path d="M3 3l18 18M10.6 10.7a2 2 0 002.8 2.8M9.4 5.1A9 9 0 0121 12a9 9 0 01-1.6 2.6M6.1 6.1A9 9 0 003 12a9 9 0 0010.9 5.3" /></svg>
           </button>
           <button className="icon-btn home-icon-btn" aria-label="Settings" onClick={() => navigate('/settings')}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2" /></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></svg>
           </button>
         </div>
       </div>

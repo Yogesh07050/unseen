@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DemoTag, Panel, QuoteLine } from '../components/ui';
+import { Panel, QuoteLine } from '../components/ui';
 import { HeatMap } from '../components/charts';
 import { allBattles } from '../data/repos';
 import { api } from '../ai/api';
@@ -31,8 +31,6 @@ export function Schemes() {
       }
     })();
   }, []);
-
-  const hasDemo = battles.some((b) => b.demo);
 
   return (
     <div className="screen has-nav">
@@ -67,7 +65,7 @@ export function Schemes() {
             </Panel>
           )}
 
-          <p className="tiny">{hasDemo ? 'Demo data. ' : ''}Patterns show what often happens together, not causes.</p>
+          <p className="tiny">Patterns show what often happens together, not causes.</p>
           <button className="icon-btn" style={{ color: 'var(--gold-hi)', alignSelf: 'flex-start' }} onClick={() => navigate('/watch')}>See this week's watch →</button>
         </>
       )}

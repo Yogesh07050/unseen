@@ -5,6 +5,10 @@
   `server/app/content/bsb_verses.json` is used only so the hackathon demo runs
   offline. In production, verse text is fetched and verified live from the
   **YouVersion Platform API** under its terms.
+- **Other Bible versions** (NIV, NASB, AMP, NIrV, WEB, …) — offered only when
+  the deployment's YouVersion app key is licensed for them. Their text is
+  fetched live from the YouVersion Platform and always displayed with the
+  copyright notice the Platform supplies for that version; nothing is bundled.
 
 ## Fonts
 - **Alegreya** and **Alegreya Sans** — SIL Open Font License 1.1.

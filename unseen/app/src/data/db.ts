@@ -15,6 +15,10 @@ db.version(1).stores({
   events: 'id, ts, type',
   keys: 'id',
 });
+// v2: the sync outbox — local writes waiting to reach the server (data/sync.ts).
+db.version(2).stores({
+  outbox: '++seq, collection',
+});
 
 export async function wipeEverything(): Promise<void> {
   await db.delete();

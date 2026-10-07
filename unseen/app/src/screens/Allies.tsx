@@ -2,8 +2,18 @@ import { useState } from 'react';
 import { Button, Panel, QuoteLine, Vellum } from '../components/ui';
 import { api } from '../ai/api';
 import { saveAlly, removeAlly } from '../data/repos';
+import { isNative, shareText } from '../native';
 import { useSettings, useUi } from '../store';
 import type { Ally } from '../types';
+
+function ago(ts: number): string {
+  const m = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  if (h < 24) return `${h} h ago`;
+  return new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
 
 export function Allies() {
   const { settings, allies, reloadAllies } = useSettings();
@@ -28,11 +38,14 @@ export function Allies() {
       showToast('Needs a connection to create a prayer link.');
       return;
     }
+    // A prayer link now exists for them: record it so the card stops saying "Not asked yet".
+    await saveAlly({ ...ally, lastAskedAt: Date.now() });
+    void reloadAllies();
     const who = settings?.firstName ?? 'Someone you love';
     const text = `${who} asked you to pray for them right now. Nothing else is shared. Tap to let them know you're praying: ${url}`;
     // Token is created; sharing is a best-effort hand-off and may be cancelled.
-    if (navigator.share) {
-      try { await navigator.share({ text }); showToast('Sent. You send it, not UNSEEN.'); }
+    if (isNative || typeof navigator.share === 'function') {
+      try { await shareText(text, 'Pray for me'); showToast('Sent. You send it, not UNSEEN.'); }
       catch (e) {
         if ((e as DOMException)?.name === 'AbortError') showToast('Share cancelled. The prayer link was created but not sent.');
         else showToast('Could not open sharing. The prayer link was created but not sent.');
@@ -54,7 +67,7 @@ export function Allies() {
         {allies.map((a) => (
           <Panel key={a.id}>
             <div className="row" style={{ justifyContent: 'space-between' }}>
-              <div><strong>{a.name}</strong><div className="tiny">Not asked yet</div></div>
+              <div><strong>{a.name}</strong><div className="tiny">{a.lastAskedAt ? `Asked ${ago(a.lastAskedAt)}` : 'Not asked yet'}</div></div>
               <div className="row">
                 <Button variant="ghost" onClick={() => ask(a)}>Ask them to pray now</Button>
               </div>

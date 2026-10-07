@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ArchetypeId } from '../types';
+import { isNative, strikeHaptic } from '../native';
+
+// Promoting the devil/boy to their own GPU layers fixes blurry sprites at the
+// web's fractional device-pixel ratios; native Android has integer DPRs and a
+// more constrained GPU, so there it only costs texture memory — skip it.
+const CRISP_LAYER = isNative
+  ? {}
+  : { transform: 'translateZ(0)', backfaceVisibility: 'hidden' as const, willChange: 'transform' };
 
 type SceneState = 'arriving' | 'fighting' | 'climax' | 'fleeing' | 'peace';
 
@@ -62,13 +70,15 @@ const ENV_SPARKS = [
 ];
 
 
-export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAcks, symbolic, reduceMotion, fill, onIntroChange }: {
+export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAcks, symbolic, reduceMotion, fill, onIntroChange, onIntroBeat }: {
   archetype: ArchetypeId; lie: string; phraseIndex: number; totalPhrases: number;
   state: SceneState; allyAcks: number; symbolic?: boolean; reduceMotion?: boolean;
   /** When true the scene fills its parent container rather than keeping a fixed aspect ratio */
   fill?: boolean;
   /** Fires true while the Scene 1 intro is playing, false once it hands off to Scene 2 */
   onIntroChange?: (playing: boolean) => void;
+  /** Fires with the intro beat (0–7, see `ip` below) each time it advances */
+  onIntroBeat?: (beat: number) => void;
 }) {
   const [flash, setFlash] = useState(false);
   const [impact, setImpact] = useState(0);
@@ -110,11 +120,15 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
     setIntroDone(true);
   }, [atStart, reduceMotion]);
 
-  // Let the parent (Battle) hide its controls while the cinematic intro plays.
+  // Let the parent (Battle) hide its controls while the cinematic intro plays,
+  // and tell it which beat is on so it can caption the space around the window.
   const introActive = !reduceMotion && atStart && !introDone;
   useEffect(() => {
     onIntroChange?.(introActive);
   }, [introActive, onIntroChange]);
+  useEffect(() => {
+    if (introActive) onIntroBeat?.(ip);
+  }, [introActive, ip, onIntroBeat]);
 
   // --- Story beats ---
   const isClimax = state === 'climax';
@@ -127,17 +141,20 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
   // The boxing poses (ready / punch) already face LEFT toward the devil — no flip needed.
 
   // Finale choreography (on the last punch / climax):
-  //   0 defeated devil + boy & angel present   1 boy & angel embrace (the hug)
-  //   2 devil dissolves completely             3 devil gone → Battle navigates on
+  //   0 devil defeated; boy (victory) & angel hold their places
+  //   1 devil snaps out; boy & angel STAY where they are — no converging, no overlap
+  //   2 right away: hug.svg eases in slowly at the centre of the window while the
+  //     two separate figures fade out beneath it; the darkness breaks
+  //   3 separate figures unmounted; the hug settles a little larger
   const [fp, setFp] = useState(0);
   useEffect(() => {
     if (!isClimax) return;              // fight: fp stays 0 (unused); peace: handled by isPeace
     if (reduceMotion) { setFp(3); return; }
     setFp(0);
     const timers = [
-      setTimeout(() => setFp(1), 350),  // devil snaps out quickly; boy & angel stand victorious
-      setTimeout(() => setFp(2), 1300), // a breath later: darkness breaks and the embrace eases in
-      setTimeout(() => setFp(3), 2200), // settle
+      setTimeout(() => setFp(1), 350),  // devil snaps out; boy & angel stand victorious in place
+      setTimeout(() => setFp(2), 900),  // the embrace begins its slow fade-in; darkness breaks
+      setTimeout(() => setFp(3), 2600), // separate figures gone; the hug settles
     ];
     return () => timers.forEach(clearTimeout);
   }, [isClimax, reduceMotion]);
@@ -158,7 +175,7 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
       setImpact((v) => v + 1);
       setFlash(true);
       setPunching(true);
-      if (navigator.vibrate) navigator.vibrate([25, 0, 15]);
+      void strikeHaptic(); // native haptic on Android; navigator.vibrate on the web
       const t1 = setTimeout(() => setFlash(false), 700);
       const t2 = setTimeout(() => setPunching(false), 480);
       prev.current = phraseIndex;
@@ -446,8 +463,8 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
       ) : (
         /* ── TAP GAME + FINALE ─────────────────────────────────────────────
            Fight: M punches D once per phrase, A watches.
-           Finale (sequenced on the last punch): D stays defeated while A waves
-           and flies away, THEN D dissolves completely, THEN Battle moves on.
+           Finale (sequenced on the last punch): D is defeated and snaps out, M and A
+           hold their places, THEN the embrace eases in at the centre, THEN Battle moves on.
            Every character stays the same height (CH). */
         <>
           {/* DEVIL (D) — defeated, then melts into nothing once the angel has gone (fp ≥ 2).
@@ -462,7 +479,7 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
             height: `${CH}%`,
             width: 'auto',
             transformOrigin: '50% 100%',
-            transform: 'translateZ(0)', backfaceVisibility: 'hidden', willChange: 'transform',  // own GPU layer → crisp at fractional DPR
+            ...CRISP_LAYER,
             opacity: isClimax ? (fp >= 1 ? 0 : 0.92) : 1, // defeated → snaps out quickly → gone
             filter: 'none',
             animation: reduceMotion ? 'none' : flash ? 'dHit .5s ease-out' : 'none',
@@ -471,55 +488,58 @@ export function Scene({ archetype, lie, phraseIndex, totalPhrases, state, allyAc
           }} />
           )}
 
-          {/* BOY (M) — victorious; grows UPWARD (feet fixed) once the darkness breaks.
-              Hidden the moment the embrace begins (the hug image carries both figures). */}
-          {!hugging && (
+          {/* BOY (M) — victorious, and he HOLDS his place: no stepping in, no overlap
+              with the angel. Stays mounted through the crossfade (fp < 3) and fades
+              out slowly from fp ≥ 2 as the hug takes over. */}
+          {!isPeace && !(isClimax && fp >= 3) && (
           <img src={mSrc} alt="" aria-hidden style={{
             position: 'absolute',
-            left: punching ? '32%' : M_LEFT,
+            left: punching && !finale ? '32%' : M_LEFT,   // the last punch settles back smoothly
             bottom: GROUND,
-            height: `${grown ? CH + 16 : CH}%`,       // grows taller — strength
+            height: `${CH}%`,
             width: 'auto',
-            transformOrigin: '50% 100%',               // anchored at the feet → growth goes up
-            transform: 'translateZ(0)', backfaceVisibility: 'hidden', willChange: 'transform',  // own GPU layer → crisp at fractional DPR
+            transformOrigin: '50% 100%',
+            ...CRISP_LAYER,
+            opacity: isClimax && fp >= 2 ? 0 : 1,
             filter: 'none',
-            animation: reduceMotion ? 'none' : finale ? 'mPopIn .6s ease-out both' : 'none',
-            transition: 'left .25s ease, height .9s cubic-bezier(.2,.9,.3,1), filter .8s ease',
+            transition: isClimax ? 'left .25s ease, opacity 1.1s ease' : 'left .25s ease, filter .8s ease',
             pointerEvents: 'none',
           }} />
           )}
 
-          {/* ANGEL (A) — watches in the fight and the opening victory beat, then
-              steps in for the embrace (the hug image takes over). */}
-          {showAngel && !hugging && (
+          {/* ANGEL (A) — watches through the fight and the victory, holding her place
+              (still hovering) rather than gliding over to the boy. Stays mounted
+              through the crossfade (fp < 3) and fades out slowly from fp ≥ 2. */}
+          {showAngel && !isPeace && !(isClimax && fp >= 3) && (
             <img src={ART.aWatch} alt="" aria-hidden style={{
               position: 'absolute',
               left: A_LEFT,
               bottom: A_BOTTOM,
               height: `${CH}%`,
               width: 'auto',
+              opacity: isClimax && fp >= 2 ? 0 : 1,
               filter: 'none',
               animation: reduceMotion ? 'none' : 'aHover 3s ease-in-out infinite',
+              transition: 'opacity 1.1s ease',
               pointerEvents: 'none',
             }} />
           )}
 
-          {/* HUG (M + A) — the boy and the angel embrace to close the battle,
-              in place of the angel flying away. A single two-figure image. */}
-          {hugging && (
+          {/* HUG (M + A) — the closing image: boy and angel embracing, centred in the
+              window and a little larger than the cast. Mounted from fp ≥ 1 so it can
+              ease in slowly beneath the fading figures; settles larger once they are gone. */}
+          {(isPeace || (isClimax && fp >= 1)) && (
             <img key="hug" src={ART.hug} alt="" aria-hidden style={{
               position: 'absolute',
               left: '50%',
               top: '50%',
-              height: '78%',
-              maxHeight: '78%',
-              maxWidth: '84%',
+              height: `${isPeace || fp >= 3 ? CH + 16 : CH + 10}%`,
               width: 'auto',
-              objectFit: 'contain',
-              transform: 'translate(-50%,-50%)',
+              transform: `translate(-50%, -50%) scale(${hugging ? 1 : 0.92})`,
               transformOrigin: '50% 50%',
-              filter: 'drop-shadow(0 8px 22px rgba(0,120,190,.35))',
-              animation: reduceMotion ? 'none' : 'hugIn 1.5s cubic-bezier(.22,1,.36,1) both',
+              opacity: hugging ? 1 : 0,
+              transition: 'opacity 1.6s ease, transform 1.6s cubic-bezier(.22,1,.36,1), height 1.4s cubic-bezier(.2,.9,.3,1)',
+              filter: 'drop-shadow(0 6px 16px rgba(0,120,190,.3))',
               pointerEvents: 'none',
               zIndex: 3,
             }} />

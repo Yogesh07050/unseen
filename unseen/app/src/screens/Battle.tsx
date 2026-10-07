@@ -6,7 +6,8 @@ import { useSettings, useUi } from '../store';
 import { pickMime } from '../engines/audio';
 import { api } from '../ai/api';
 import { matchPhrase, norm } from '../engines/matcher';
-import { VerseSkeleton } from '../components/ui';
+import { VerseAttribution, VerseSkeleton } from '../components/ui';
+import { FIXED_FRAGMENTS, FIXED_OK } from '../content/truthIndex';
 
 type Mode = 'idle' | 'starting' | 'recording' | 'transcribing';
 
@@ -15,6 +16,23 @@ const SILENCE_THRESHOLD = 0.06;  // 0–1 RMS level below which we count as sile
 const SILENCE_WAIT_MS   = 1300;  // ms of silence before sending chunk to Whisper
 const MIN_BLOB_BYTES    = 1500;  // ignore blobs smaller than this
 const MATCH_THRESHOLD   = 0.55;  // fuzzy phrase match threshold (slightly lower for real-time)
+
+// ─── Intro captions ─────────────────────────────────────────────────────────
+// While the cinematic intro plays the verse and controls are hidden; these words
+// fill the space around the window instead, timed to the Scene's beats
+// (Scene.tsx `ip` 0–7). Every Scripture line is a fixed fragment byte-checked
+// against the API at boot (FIXED_OK); a fragment that failed that check is never shown.
+const INTRO_BEATS: { from: number; title: string; fragment: string; reference: string }[] = [
+  { from: 0, title: 'He whispers the lie.',              fragment: 'schemes', reference: '2 Corinthians 2:11' },
+  { from: 4, title: 'Help comes.',                       fragment: 'cryOut',  reference: 'Romans 8:26' },
+  { from: 5, title: 'The Word is placed in your hands.', fragment: 'sword',   reference: 'Ephesians 6:17' },
+  { from: 7, title: 'Now stand.',                        fragment: 'stand',   reference: 'Ephesians 6:13' },
+];
+function introCaption(beat: number) {
+  let hit: (typeof INTRO_BEATS)[number] | null = null;
+  for (const b of INTRO_BEATS) if (b.from <= beat && FIXED_OK[b.fragment] !== false) hit = b;
+  return hit;
+}
 
 // ─── Component ──────────────────────────────────────────────────────────────
 export function Battle() {
@@ -26,6 +44,7 @@ export function Battle() {
   const [introPlaying, setIntroPlaying] = useState(false); // Scene 1 cinematic intro
   const [mode, setMode]   = useState<Mode>('idle');
   const [heardText, setHeardText]   = useState('');
+  const [introBeat, setIntroBeat]   = useState(0);           // Scene intro beat (0–7) for the captions
 
   // ── Audio refs ─────────────────────────────────────────────────────────
   const streamRef    = useRef<MediaStream | null>(null);
@@ -282,6 +301,7 @@ export function Battle() {
 
   const verse = ctx.verse;
   const total = verse.phrases.length;
+  const caption = introCaption(introBeat);
 
   const statusLine =
     state === 'climax'        ? 'The scroll is nailed to the cross.' :
@@ -316,48 +336,77 @@ export function Battle() {
         <span className="tiny" style={{ color: 'var(--faint)', letterSpacing: '.4px' }}>{verse.reference}</span>
       </div>
 
-      {/* ── Battle scene — fills the available space so there is no empty surround ───────── */}
-      <div style={{ flex: '1 1 auto', minHeight: 0, position: 'relative' }}>
-        <Scene
-          archetype={ctx.archetype ?? 'shadow'}
-          lie={ctx.discernment?.lie ?? ''}
-          phraseIndex={ctx.phraseIndex}
-          totalPhrases={total}
-          state={state === 'climax' ? 'climax' : 'fighting'}
-          allyAcks={ctx.allyAcks}
-          symbolic={settings?.battleStyle === 'symbolic'}
-          reduceMotion={settings?.reduceMotion}
-          onIntroChange={setIntroPlaying}
-          fill
-        />
-      </div>
+      {/* Flexible gap above the window keeps the scene where it sits today. */}
+      <div style={{ flex: '1 1 0', minHeight: 4 }} />
 
-      {/* ── Ally acknowledgement ───────────────────────────── */}
-      {ctx.allyAcks > 0 && (
-        <p className="small" style={{ textAlign: 'center', color: 'var(--spirit)', margin: 0, flexShrink: 0 }}>
-          An ally is praying for you right now.
-        </p>
-      )}
+      {/* ── Beat line (above the window) ──────────────────────
+          During the cinematic intro it narrates the scene; afterwards it carries the
+          ally acknowledgement. Always one line tall so the window never jumps. */}
+      <p className="quote" style={{ flexShrink: 0, margin: 0, minHeight: 24, textAlign: 'center', fontSize: 16, lineHeight: '24px' }}>
+        {introPlaying && caption ? (
+          <span key={`t-${caption.from}`} className="intro-word" style={{ display: 'inline-block' }}>{caption.title}</span>
+        ) : ctx.allyAcks > 0 ? (
+          <span style={{ color: 'var(--spirit)', fontStyle: 'normal', fontFamily: 'var(--sans)', fontSize: 14.5 }}>An ally is praying for you right now.</span>
+        ) : null}
+      </p>
 
-      {/* ── Verse vellum ───────────────────────────────────── */}
-      <div className="vellum" style={{ flexShrink: 0, font: '400 16px/1.42 var(--serif)', padding: '12px 14px 10px',
-        opacity: introPlaying ? 0 : 1, pointerEvents: introPlaying ? 'none' : undefined, transition: 'opacity .6s ease' }}>
-        {verse.phrases.map((p, i) => (
-          <span
-            key={i}
-            onClick={() => { if (i === ctx.phraseIndex && state === 'fighting') tapStrike(); }}
-            style={{
-              borderBottom: i < ctx.phraseIndex ? '2px solid var(--illumination)' : 'none',
-              background: i === ctx.phraseIndex && state === 'fighting' ? 'rgba(0,168,225,.20)' : 'transparent',
-              cursor: i === ctx.phraseIndex && state === 'fighting' ? 'pointer' : 'default',
-              borderRadius: 2,
-            }}
-          >{p}{i < verse.phrases.length - 1 ? ' ' : ''}</span>
-        ))}
-        <div style={{ fontFamily: 'var(--sans)', fontSize: 12, color: 'var(--ink-muted)', marginTop: 6 }}>
-          {verse.reference}, Berean Standard Bible
+      {/* ── Battle scene — the original bounded portrait window (390×440), so the
+          characters keep their original size and spacing ─────────────────── */}
+      <div style={{ flex: '0 1 auto', minHeight: 0, display: 'flex', justifyContent: 'center' }}>
+        <div style={{ height: 'min(420px, 46dvh)', aspectRatio: '390 / 440', maxWidth: '100%', position: 'relative' }}>
+          <Scene
+            archetype={ctx.archetype ?? 'shadow'}
+            lie={ctx.discernment?.lie ?? ''}
+            phraseIndex={ctx.phraseIndex}
+            totalPhrases={total}
+            state={state === 'climax' ? 'climax' : 'fighting'}
+            allyAcks={ctx.allyAcks}
+            symbolic={settings?.battleStyle === 'symbolic'}
+            reduceMotion={settings?.reduceMotion}
+            onIntroChange={setIntroPlaying}
+            onIntroBeat={setIntroBeat}
+            fill
+          />
         </div>
       </div>
+
+      {/* The Word sits centred between the window and the progress dots: equal
+          flexible gaps above and below it (see the matching spacer after the vellum). */}
+      <div style={{ flex: '1 1 0', minHeight: 12 }} />
+
+      {/* ── The Word ───────────────────────────────────────────
+          The verse vellum; until the intro hands over, a verified Scripture line
+          takes its place so the space below the window is never empty. */}
+      <div style={{ flexShrink: 0, position: 'relative' }}>
+        <div className="vellum" style={{ font: '400 16px/1.42 var(--serif)', padding: '12px 14px 10px',
+          opacity: introPlaying ? 0 : 1, pointerEvents: introPlaying ? 'none' : undefined, transition: 'opacity .6s ease' }}>
+          {verse.phrases.map((p, i) => (
+            <span
+              key={i}
+              onClick={() => { if (i === ctx.phraseIndex && state === 'fighting') tapStrike(); }}
+              style={{
+                borderBottom: i < ctx.phraseIndex ? '2px solid var(--illumination)' : 'none',
+                background: i === ctx.phraseIndex && state === 'fighting' ? 'rgba(0,168,225,.20)' : 'transparent',
+                cursor: i === ctx.phraseIndex && state === 'fighting' ? 'pointer' : 'default',
+                borderRadius: 2,
+              }}
+            >{p}{i < verse.phrases.length - 1 ? ' ' : ''}</span>
+          ))}
+          <VerseAttribution verse={verse} size={12} />
+        </div>
+        {introPlaying && (
+          <div aria-live="polite" style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', textAlign: 'center', padding: '0 10px', pointerEvents: 'none' }}>
+            {caption && (
+              <p key={`v-${caption.from}`} className="quote intro-word" style={{ margin: 0, fontSize: 18, lineHeight: '26px' }}>
+                “{FIXED_FRAGMENTS[caption.fragment].text}” <span className="ref">{caption.reference}</span>
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Matching gap below the Word, so it floats midway to the dots. */}
+      <div style={{ flex: '1 1 0', minHeight: 8 }} />
 
       {/* ── Phrase progress dots + status ──────────────────── */}
       <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
@@ -415,6 +464,16 @@ export function Battle() {
           </button>
         )}
       </div>
+
+      {/* Bottom breathing room — smaller than the gap above the verse, so the
+          screen reads as filled rather than top-heavy. */}
+      <div style={{ flex: '1 1 0', minHeight: 8 }} />
+
+      <style>{`
+        @keyframes introWord { 0%{opacity:0;transform:translateY(6px)} 100%{opacity:1;transform:translateY(0)} }
+        .intro-word { animation: introWord .7s ease both }
+        @media (prefers-reduced-motion: reduce) { .intro-word { animation: none } }
+      `}</style>
     </div>
   );
 }

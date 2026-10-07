@@ -5,9 +5,42 @@ services:
     env_file: .env
     environment:
       REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://unseen:unseen@postgres:5432/unseen
       STATIC_DIR: /srv/static
       ENV: production
-    depends_on: [redis]
+    depends_on:
+      redis: { condition: service_started }
+      migrate: { condition: service_completed_successfully }
+
+  # One-shot: applies database/migrations/*.sql, then exits. The app waits for it.
+  migrate:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://unseen:unseen@postgres:5432/unseen
+    command: ["python", "/srv/database/migrate.py"]
+    depends_on:
+      postgres: { condition: service_healthy }
+
   redis:
+    # Ephemeral by design: only rate-limit counters live here.
     image: redis:7-alpine
     command: ["redis-server", "--save", "", "--appendonly", "no"]
+
+  postgres:
+    # Durable, content-free server state: prayer links, anonymous installs,
+    # AI-call metadata, Truth Index references (see database/README.md).
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: unseen
+      POSTGRES_PASSWORD: unseen   # dev default — override in production
+      POSTGRES_DB: unseen
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U unseen -d unseen"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+volumes:
+  pgdata: {}

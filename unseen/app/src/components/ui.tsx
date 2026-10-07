@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import type { VerifiedVerse } from '../types';
+import type { Passage, VerifiedVerse } from '../types';
 
 export function Button({ children, variant = 'gold', onClick, disabled, type = 'button' }: {
   children: ReactNode; variant?: 'gold' | 'ghost' | 'quiet'; onClick?: () => void; disabled?: boolean; type?: 'button' | 'submit';
@@ -56,6 +56,21 @@ export function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) =
   );
 }
 
+// Reference, version and the copyright notice the version's licence requires
+// (YouVersion terms: Bible text is always shown with its attribution).
+export function VerseAttribution({ verse, size = 13.5, color = 'var(--ink-muted)' }: {
+  verse: Pick<Passage, 'reference' | 'versionTitle' | 'copyright'>; size?: number; color?: string;
+}) {
+  return (
+    <div style={{ fontFamily: 'var(--sans)', marginTop: 8, color }}>
+      <div style={{ fontSize: size }}>{verse.reference} · {verse.versionTitle}</div>
+      {verse.copyright && (
+        <div style={{ fontSize: Math.max(10.5, size - 2.5), lineHeight: 1.3, marginTop: 3, opacity: 0.8 }}>{verse.copyright}</div>
+      )}
+    </div>
+  );
+}
+
 export function Vellum({ verse, battle, children }: { verse?: VerifiedVerse; battle?: boolean; children?: ReactNode }) {
   return (
     <div className="vellum" style={{
@@ -67,7 +82,7 @@ export function Vellum({ verse, battle, children }: { verse?: VerifiedVerse; bat
       {verse ? (
         <>
           <div>{verse.text}</div>
-          <div style={{ fontFamily: 'var(--sans)', fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 8 }}>{verse.reference}</div>
+          <VerseAttribution verse={verse} />
         </>
       ) : children}
     </div>
@@ -88,8 +103,6 @@ export function QuoteLine({ text, reference }: { text: string; reference: string
     <p className="quote">“{text}” <span className="ref">{reference}</span></p>
   );
 }
-
-export function DemoTag() { return <span className="demo-tag">Demo data</span>; }
 
 import type { VoiceStatus } from '../engines/voiceStatus';
 

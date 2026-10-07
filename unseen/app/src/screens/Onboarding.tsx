@@ -1,13 +1,24 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button, Chip, Panel, QuoteLine } from '../components/ui';
+import { Button, Chip, QuoteLine } from '../components/ui';
+import { BibleList } from '../components/BibleList';
 import { useSettings } from '../store';
 import { DEFAULT_SETTINGS } from '../data/repos';
 import { allFixedUsfm } from '../content/truthIndex';
+import { BSB } from '../engines/bibles';
 import { getPassage } from '../engines/verses';
 import type { Settings } from '../types';
 
-type Step = 'welcome' | 'age' | 'name' | 'tradition' | 'bible' | 'lock' | 'allies' | 'prepare';
+// Run `fn` over `items` with at most `limit` in flight, so onboarding does not
+// fan out every Truth Index verse at YouVersion at once.
+async function eachLimited<T>(items: T[], limit: number, fn: (item: T) => Promise<void>) {
+  const queue = [...items];
+  await Promise.all(Array.from({ length: Math.min(limit, queue.length) }, async () => {
+    while (queue.length) await fn(queue.shift() as T);
+  }));
+}
+
+type Step = 'welcome' | 'age' | 'name' | 'tradition' | 'bible' | 'allies' | 'prepare';
 
 export function Onboarding() {
   const navigate = useNavigate();
@@ -22,14 +33,17 @@ export function Onboarding() {
     go('prepare');
     try {
       if ('storage' in navigator && navigator.storage.persist) await navigator.storage.persist();
-      // Prefetch and cache every Truth Index verse (public-domain BSB).
+      // Prefetch and cache every Truth Index verse in the chosen version so the
+      // first battle is instant and works offline.
       const ids = allFixedUsfm();
       let done = 0;
-      await Promise.all(ids.map(async (u) => {
+      await eachLimited(ids, 6, async (u) => {
         try { await getPassage(d.bibleId, [u]); } catch { /* ignore */ }
         done += 1;
         setPrepareMsg(`Gathering your verses… ${done}/${ids.length}`);
-      }));
+      });
+      // The public-domain BSB is the offline stand-in for any other version: warm it in the background.
+      if (d.bibleId !== BSB) void eachLimited(ids, 3, (u) => getPassage(BSB, [u]).then(() => undefined, () => undefined));
     } catch { /* ignore */ }
     await update({ ...d, onboardedAt: Date.now(), adultConfirmedAt: Date.now() });
     navigate('/', { replace: true });
@@ -101,24 +115,10 @@ export function Onboarding() {
       <div className="screen fade-up">
         <div className="spacer" />
         <h2 className="section-title">Bible version</h2>
-        <Panel><div className="row"><div style={{ flex: 1 }}><strong>Berean Standard Bible</strong><div className="tiny">Public domain · recommended</div></div><span style={{ color: 'var(--gold-hi)' }}>✓</span></div></Panel>
-        <p className="tiny">Other versions follow their YouVersion licence and need an app key.</p>
+        <p className="small muted" style={{ margin: 0 }}>The version your verses are shown in. You can change it any time in Settings.</p>
+        <BibleList value={draft.bibleId} onChange={(b) => setDraft({ ...draft, bibleId: b.id })} />
         <div className="spacer" />
-        <Button onClick={() => go('lock')}>Continue</Button>
-      </div>
-    );
-  }
-
-  if (step === 'lock') {
-    const hasWebauthn = 'credentials' in navigator && 'PublicKeyCredential' in window;
-    return (
-      <div className="screen fade-up">
-        <div className="spacer" />
-        <h2 className="section-title">Lock UNSEEN with Face ID?</h2>
-        <p className="body">Your battle log is sensitive. A device lock keeps it yours.</p>
-        <div className="spacer" />
-        <Button onClick={() => { setDraft({ ...draft, lock: hasWebauthn ? 'webauthn' : 'none' }); go('allies'); }}>Turn on</Button>
-        <Button variant="ghost" onClick={() => go('allies')}>Not now</Button>
+        <Button onClick={() => go('allies')}>Continue</Button>
       </div>
     );
   }

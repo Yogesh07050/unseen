@@ -1,18 +1,24 @@
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { Button, Chip, Panel, Toggle } from '../components/ui';
+import { BibleList } from '../components/BibleList';
+import { attribution, useBibleInfo, useBibles } from '../engines/bibles';
 import { useSettings, useUi } from '../store';
 import { downloadExportJson } from '../data/export';
 import { wipeEverything } from '../data/db';
-import { clearDemo } from '../data/repos';
 import { resetKeyCache } from '../data/crypto';
+import { wipeRemote } from '../data/sync';
+import { installId } from '../ai/api';
 
 export function SettingsScreen() {
   const navigate = useNavigate();
   const { settings, update } = useSettings();
   const { showToast } = useUi();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [pickVersion, setPickVersion] = useState(false);
   const s = settings;
+  const bible = useBibleInfo(s?.bibleId ?? 3034);
+  const { catalog } = useBibles();
   if (!s) return null;
 
   return (
@@ -31,7 +37,21 @@ export function SettingsScreen() {
             <Chip label="General" selected={!s.tradition} onClick={() => update({ tradition: undefined })} />
           </div>
         </SettingRow>
-        <SettingRow label="Bible version"><span className="small muted">Berean Standard Bible</span></SettingRow>
+        <SettingRow label="Bible version">
+          <div className="row">
+            <span className="small muted">{bible.title}</span>
+            <Chip label={pickVersion ? 'Close' : 'Change'} selected={pickVersion} onClick={() => setPickVersion((v) => !v)} />
+          </div>
+        </SettingRow>
+        {pickVersion && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '10px 0', borderBottom: '1px solid var(--line)' }}>
+            <BibleList value={s.bibleId} maxHeight={320} onChange={async (b) => {
+              await update({ bibleId: b.id });
+              setPickVersion(false);
+              showToast(`Scripture will now be shown from the ${b.title}.`);
+            }} />
+          </div>
+        )}
         <SettingRow label="Appearance">
           <div className="row">
             {(['light', 'dark', 'system'] as const).map((t) => (
@@ -46,9 +66,9 @@ export function SettingsScreen() {
           </div>
         </SettingRow>
         <SettingRow label="Discernment">
-          <div className="row">
-            <Chip label="Instant" selected={(s.discernMode ?? 'instant') === 'instant'} onClick={() => update({ discernMode: 'instant' })} />
-            <Chip label="Deeper reading" selected={s.discernMode === 'gloo'} onClick={() => update({ discernMode: 'gloo' })} />
+          <div className="row" style={{ flexWrap: 'wrap' }}>
+            <Chip label="AI reads your words" selected={(s.discernMode ?? 'gloo') === 'gloo'} onClick={() => update({ discernMode: 'gloo', discernChosen: true })} />
+            <Chip label="On this phone only" selected={s.discernMode === 'instant'} onClick={() => update({ discernMode: 'instant', discernChosen: true })} />
           </div>
         </SettingRow>
         <SettingRow label="Reduce motion"><Toggle on={s.reduceMotion} onChange={(v) => update({ reduceMotion: v })} /></SettingRow>
@@ -70,19 +90,27 @@ export function SettingsScreen() {
         <button className="list-row" style={{ ...rowBtn, color: 'var(--ember)', borderBottom: 'none' }} onClick={() => setConfirmDelete(true)}>Delete everything</button>
       </Panel>
 
-      <button className="icon-btn" style={{ alignSelf: 'flex-start' }} onClick={() => { navigate('/dev'); }}>Demo controls</button>
-      <button className="icon-btn" style={{ alignSelf: 'flex-start' }} onClick={async () => { await clearDemo(); showToast('Demo data cleared.'); }}>Clear demo data</button>
+      <Panel>
+        <p className="tiny" style={{ margin: 0 }}>
+          Your battles, stones, allies and Armory are saved on this phone and backed up to UNSEEN under this install only
+          (no account, no e-mail). Your spoken words never leave the phone. Install id: {installId().slice(0, 8)}.
+        </p>
+      </Panel>
 
       <Panel>
-        <p className="tiny" style={{ margin: 0 }}>The Holy Bible, Berean Standard Bible, is in the public domain. Fonts: Alegreya &amp; Alegreya Sans (SIL Open Font License). Scripture is fetched and verified at run time, never generated.</p>
+        <p className="tiny" style={{ margin: 0 }}>
+          Scripture: {bible.title} ({bible.abbreviation}). {attribution(bible)}{' '}
+          {catalog.live ? 'Fetched live from the YouVersion Platform and verified at run time, never generated.' : 'Fetched and verified at run time, never generated.'}{' '}
+          Fonts: Alegreya &amp; Alegreya Sans (SIL Open Font License).
+        </p>
       </Panel>
 
       {confirmDelete && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(38,33,26,.5)', backdropFilter: 'blur(3px)', display: 'grid', placeItems: 'center', zIndex: 60, padding: 24 }}>
           <div className="card" style={{ maxWidth: 360, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <h2 className="section-title">Delete everything</h2>
-            <p className="body" style={{ margin: 0 }}>This deletes every battle, stone and setting on this phone. It cannot be undone.</p>
-            <Button onClick={async () => { await wipeEverything(); resetKeyCache(); location.href = '/'; }}>Delete it all</Button>
+            <p className="body" style={{ margin: 0 }}>This deletes every battle, stone, ally and setting on this phone and its backup on UNSEEN. It cannot be undone.</p>
+            <Button onClick={async () => { await wipeRemote(); await wipeEverything(); resetKeyCache(); location.href = '/'; }}>Delete it all</Button>
             <Button variant="ghost" onClick={() => setConfirmDelete(false)}>Keep my data</Button>
           </div>
         </div>

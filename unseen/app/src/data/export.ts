@@ -4,8 +4,7 @@ export async function buildExport() {
   const [settings, battles, stones, armory, watch, allies] = await Promise.all([
     getSettings(), allBattles(), allStones(), allArmory(), allWatch(), allAllies(),
   ]);
-  const safeSettings = settings ? { ...settings, credentialId: undefined } : null;
-  return { version: 1 as const, exportedAt: Date.now(), settings: safeSettings, battles, stones, armory, watch, allies };
+  return { version: 1 as const, exportedAt: Date.now(), settings, battles, stones, armory, watch, allies };
 }
 
 export async function downloadExportJson() {
